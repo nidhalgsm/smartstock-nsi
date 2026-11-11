@@ -51,3 +51,8 @@ dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0}dt{colo
 @keyframes fill{from{--p:0%}}@keyframes sh{to{background-position:-200%}}@keyframes pop{0%{transform:scale(0)}40%{transform:scale(1.2)}70%{transform:scale(1)}100%{opacity:0}}
 @media(max-width:900px){.bento{grid-template-columns:1fr}.span2{grid-column:auto}.orb{display:none}.login{grid-template-columns:1fr}.stage{height:300px}.grid2{grid-template-columns:1fr}.top input{display:none}main{padding:0 12px 24px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.i{width:1.15em;height:1.15em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;flex:none}
+.pill,.ico{display:inline-flex;align-items:center;justify-content:center;gap:6px}.rail .i{width:1.3rem;height:1.3rem}.b .i{width:1em;height:1em;vertical-align:-.15em;margin-right:3px}
+.rail span{display:grid;place-items:center}.logo{display:flex;align-items:center;gap:8px}.lcard h1 .i{color:var(--ac2);width:1em;height:1em}
+.boot{min-height:100vh;display:grid;place-content:center;gap:14px;text-align:center;color:var(--mut)}.boot a{color:var(--ac2)}
+.spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--ac);border-radius:50%;animation:turn .8s linear infinite;margin:auto}

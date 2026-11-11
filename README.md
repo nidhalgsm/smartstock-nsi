@@ -21,3 +21,8 @@ python tools/check_contract.py        # frontend calls <-> backend routes <-> DB
 node tools/smoke_test.js              # opens every page with fake data
 cd backend && pip install -r requirements.txt && python -m unittest discover -s tests
 ```
+
+## Notes (v5)
+* Blank-screen fix: `boot()` no longer calls Supabase inside `onAuthStateChange` (it could deadlock); `index.html` shows a loader / error / reload link instead of a black page, loads Supabase from a second CDN if the first fails, and `netlify.toml` sends `Cache-Control: no-cache` so old files are never mixed with new ones.
+* Icons: monochrome line icons (inline SVG, `ICONS` in `frontend/app.js`) follow the text color. Add one by adding a name to `ICONS` and writing `{{name}}` in any rendered text.
+* Keep your own `frontend/config.js` when updating.

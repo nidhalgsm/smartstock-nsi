@@ -26,4 +26,9 @@ for c in ("sajalni_status", "color", "ram", "rom", "owner_name", "is_repair", "s
     if c not in mig: bad.append(f"no migration adds {c}")
 for w in ("delete from", "drop table", "truncate"):
     if w in (mig + sql).lower(): bad.append(f"SQL contains destructive statement: {w}")
-print("routes:", len(routes)); print("\n".join(bad) if bad else "CONTRACT OK"); sys.exit(1 if bad else 0)
+print("routes:", len(routes)); print("\n".join(bad) if bad else "CONTRACT OK"); rc = 1 if bad else 0
+# --- icons: every {{token}} has an SVG, and no colour emoji is left in the frontend
+js = R("frontend", "app.js"); have = set(re.findall(r"^\s+(\w+): `<", js, re.M)); tok = set(re.findall(r"\{\{(\w+)\}\}", js))
+left = re.findall(r"[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\u23E0-\u23FF\u2190-\u21FF\u25D0]", js + R("frontend", "index.html"))
+print("icons:", len(have), "| tokens used:", len(tok)); e = [f"icon token without SVG: {t}" for t in tok - have] + ([f"emoji left: {left}"] if left else [])
+print("\n".join(e) if e else "ICONS OK"); sys.exit(1 if (e or rc) else 0)

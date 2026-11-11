@@ -19,7 +19,7 @@ const fx = p => p.startsWith("/dashboard") ? { in_stock: 1, blocked_in_stock: 1,
   const out = []; global.__errs = errs; global.__fx = fx;
   vm.runInThisContext(`toast = m => __errs.push(m); api = async p => __fx(p); session = { user: { email: "a@b.c" } };`);
   for (const k of ["dash", "stock", "add", "sell", "sold", "tasjil", "tools"]) { vm.runInThisContext(`page = "${k}"; shell();`); await new Promise(r => setTimeout(r, 20)); out.push(k + ":" + (els.v.innerHTML.length > 50 ? "ok" : "EMPTY")); }
-  vm.runInThisContext(`toggleLang(); toggleLang(); formHtml({ is_repair: true, owner_name: "Sam" }); row(ROWS.stock[0], 0, "stock"); row(ROWS.sold[0], 0, "sold");`);
+  if (!vm.runInThisContext(`ic("dash")`).includes("<svg")) errs.push("ic() broken"); vm.runInThisContext(`toggleLang(); toggleLang(); formHtml({ is_repair: true, owner_name: "Sam" }); row(ROWS.stock[0], 0, "stock"); row(ROWS.sold[0], 0, "sold");`);
   console.log(out.join("  ")); console.log(errs.length ? "ERRORS: " + errs.join(" | ") : "SMOKE OK");
   process.exit(errs.length || out.some(x => x.includes("EMPTY")) ? 1 : 0);
 })().catch(e => { console.log("CRASH", e.stack.split("\n").slice(0, 4).join("\n")); process.exit(1); });

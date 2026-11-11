@@ -1,8 +1,49 @@
+// ---------- line icons (monochrome, follow the text color) ----------
+const ICONS = {
+  dash: `<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>`,
+  box: `<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>`,
+  plus: `<path d="M12 5v14M5 12h14"/>`,
+  banknote: `<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>`,
+  receipt: `<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>`,
+  shield: `<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>`,
+  toolbox: `<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5h6v3M3 13h18"/>`,
+  eye: `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>`,
+  pencil: `<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/>`,
+  trash: `<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>`,
+  clock: `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
+  sliders: `<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>`,
+  undo: `<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>`,
+  camera: `<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>`,
+  copy: `<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>`,
+  external: `<path d="M7 17 17 7M8 7h9v9"/>`,
+  download: `<path d="M12 4v11m-5-4 5 5 5-5M4 20h16"/>`,
+  printer: `<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><rect x="7" y="14" width="10" height="7"/>`,
+  check_circle: `<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>`,
+  alert: `<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17.5h.01"/>`,
+  ban: `<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>`,
+  hourglass: `<path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/>`,
+  search: `<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>`,
+  alert_circle: `<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/>`,
+  user: `<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>`,
+  heart: `<path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/>`,
+  x_circle: `<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>`,
+  wrench: `<path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>`,
+  phone: `<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/>`,
+  check: `<path d="m5 12 5 5 9-10"/>`,
+  x: `<path d="m6 6 12 12M18 6 6 18"/>`,
+  arrow_left: `<path d="M19 12H5m6-6-6 6 6 6"/>`,
+  arrow_right: `<path d="M5 12h14m-6-6 6 6-6 6"/>`,
+  contrast: `<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/>`
+};
+const ic = n => ICONS[n] ? `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>` : "";
+// double-brace tokens in any HTML we render become icons
+if (typeof Element !== "undefined") { const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  Object.defineProperty(Element.prototype, "innerHTML", { configurable: true, get() { return d.get.call(this); }, set(v) { d.set.call(this, typeof v === "string" ? v.replace(/\{\{(\w+)\}\}/g, (m, n) => ic(n)) : v); } }); }
 const $ = id => document.getElementById(id), esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const fmt = n => n == null ? "—" : Number(n).toFixed(3) + " TND", fdate = s => s ? new Date(s).toLocaleString("fr-FR", { timeZone: "Africa/Tunis" }) : "—";
 const SAJ = { autorise: "Autorisé", non_autorise: "Non autorisé", bloque: "Bloqué" }, RES = { ...SAJ, enregistre_temporairement: "Enregistré temporairement", a_verifier: "À vérifier", erreur: "Erreur de vérification" };
-const ICON = { autorise: "✅", non_autorise: "⚠️", bloque: "⛔", enregistre_temporairement: "⏳", a_verifier: "🔎", erreur: "❗" }, CAT = { tunisien: "Tunisien", parallele: "Parallèle" };
+const ICON = { autorise: "{{check_circle}}", non_autorise: "{{alert}}", bloque: "{{ban}}", enregistre_temporairement: "{{hourglass}}", a_verifier: "{{search}}", erreur: "{{alert_circle}}" }, CAT = { tunisien: "Tunisien", parallele: "Parallèle" };
 const COLORS = "Black,White,Silver,Gray,Space Gray,Graphite,Gold,Rose Gold,Champagne,Blue,Navy Blue,Sky Blue,Ice Blue,Midnight,Starlight,Green,Mint,Olive,Forest Green,Red,Crimson,Burgundy,Pink,Purple,Deep Purple,Lavender,Violet,Yellow,Orange,Coral,Bronze,Copper,Brown,Beige,Cream,Titanium,Natural Titanium,Desert Titanium,Blue Titanium,Teal,Turquoise,Cyan,Magenta,Lime,Aurora,Cosmic Orange,Phantom Black,Iceberg Blue".split(",");
 const badge = s => s ? `<span class="b b-${s}">${ICON[s]} ${RES[s]}</span>` : "<small>—</small>";
 const specs = x => [x.ram && x.ram + " GB RAM", x.rom && x.rom + " GB", x.color].filter(Boolean).join(" · ") || "—";
@@ -26,7 +67,7 @@ document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark"
 // ---------- camera barcode scan ----------
 let stream, scanning = false;
 function stopScan() { scanning = false; if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; const o = $("scan"); if (o) o.remove(); }
-async function scan(id, then) { stopScan(); const o = document.createElement("div"); o.id = "scan"; o.className = "ov"; o.innerHTML = `<video id="vid" playsinline muted></video><button class="pill w" onclick="stopScan()">✕</button>`; document.body.appendChild(o);
+async function scan(id, then) { stopScan(); const o = document.createElement("div"); o.id = "scan"; o.className = "ov"; o.innerHTML = `<video id="vid" playsinline muted></video><button class="pill w" onclick="stopScan()">{{x}}</button>`; document.body.appendChild(o);
   try { if (!("BarcodeDetector" in window)) throw 0; const det = new BarcodeDetector(); stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     const v = $("vid"); v.srcObject = stream; await v.play(); scanning = true;
     while (scanning) { const r = await det.detect(v).catch(() => []); if (r.length) { if (navigator.vibrate) navigator.vibrate(80); stopScan(); $(id).value = r[0].rawValue.trim(); if (then) then(); return; } await new Promise(r => setTimeout(r, 200)); }
@@ -34,10 +75,15 @@ async function scan(id, then) { stopScan(); const o = document.createElement("di
 
 // ---------- auth ----------
 let authed = null, session = null, page = "dash", arg = null;
-async function boot() { const { data } = await sb.auth.getSession(); session = data.session; if (!!session === authed) return; authed = !!session; session ? shell() : login(); }
-sb.auth.onAuthStateChange(() => boot());
+async function boot(s) {
+  try { if (s === undefined) { const { data } = await sb.auth.getSession(); s = data.session; }
+    session = s; if (!!s === authed) return; authed = !!s; s ? shell() : login();
+  } catch (e) { $("app").innerHTML = `<div class="boot">Could not start: ${esc(e.message)} <a href="">Reload</a></div>`; }
+}
+// calling Supabase methods inside this callback can deadlock (blank page): defer and use the session it gives us
+sb.auth.onAuthStateChange((ev, s) => setTimeout(() => boot(s), 0));
 function login() {
-  $("app").innerHTML = `<div class="login"><form class="card lcard" onsubmit="doLogin(event)"><h1>📱 SmartStock <span>TN</span></h1><p class="mut">Stock, sales and Sajalni checks in one place.</p>
+  $("app").innerHTML = `<div class="login"><form class="card lcard" onsubmit="doLogin(event)"><h1>{{phone}} SmartStock <span>TN</span></h1><p class="mut">Stock, sales and Sajalni checks in one place.</p>
   <input id="em" type="email" placeholder="Email" autocomplete="username" required><input id="pw" type="password" placeholder="Password" autocomplete="current-password" required>
   <button class="pill" style="width:100%;margin-top:8px">Sign in</button><div id="lm"></div></form>
   <div class="stage"><div class="float"><div class="phone"><div class="f fr"><div class="scr"><div><b>NSI</b><br><small>SmartStock</small></div></div></div><div class="f bk"><i></i></div><div class="f sd sl"></div><div class="f sd sr"></div></div></div></div></div>`;
@@ -46,12 +92,12 @@ async function doLogin(e) { e.preventDefault(); const { error } = await sb.auth.
   if (error) $("lm").innerHTML = `<div class="msg">${/fetch|network/i.test(error.message) ? "Cannot reach the server. Check config.js" : "Wrong email or password"}</div>`; }
 
 // ---------- shell ----------
-const NAV = [["dash", "📊", "Dashboard"], ["stock", "📦", "Stock"], ["add", "➕", "Add phone"], ["sell", "💰", "Sell"], ["sold", "🧾", "Sold phones"], ["tasjil", "🛡️", "Tasjil Sajalni"], ["tools", "🧰", "Tools"]];
+const NAV = [["dash", "{{dash}}", "Dashboard"], ["stock", "{{box}}", "Stock"], ["add", "{{plus}}", "Add phone"], ["sell", "{{banknote}}", "Sell"], ["sold", "{{receipt}}", "Sold phones"], ["tasjil", "{{shield}}", "Tasjil Sajalni"], ["tools", "{{toolbox}}", "Tools"]];
 const go = (p, a = null) => { page = p; arg = a; shell(); };
 function shell() {
-  $("app").innerHTML = `<div class="app"><aside class="rail"><div class="logo">📱 SmartStock</div>${NAV.map(([k, e, l]) => `<button class="${k === page ? "on" : ""}" onclick="go('${k}')"><span>${e}</span><em>${l}</em></button>`).join("")}</aside>
+  $("app").innerHTML = `<div class="app"><aside class="rail"><div class="logo">{{phone}} SmartStock</div>${NAV.map(([k, e, l]) => `<button class="${k === page ? "on" : ""}" onclick="go('${k}')"><span>${e}</span><em>${l}</em></button>`).join("")}</aside>
   <main><div class="top"><h1>${NAV.find(n => n[0] === page)[2]}</h1><input placeholder="Search…" onkeydown="if(event.key==='Enter'&&this.value){L.stock.q=this.value;L.stock.page=1;L.stock.cat='';go('stock')}">
-  <button class="ico" onclick="toggleLang()">${LANG === "fr" ? "EN" : "FR"}</button><button class="ico" onclick="toggleTheme()">◐</button><button class="pill g" onclick="sb.auth.signOut()">Sign out</button></div><div id="v"></div></main></div>`;
+  <button class="ico" onclick="toggleLang()">${LANG === "fr" ? "EN" : "FR"}</button><button class="ico" onclick="toggleTheme()">{{contrast}}</button><button class="pill g" onclick="sb.auth.signOut()">Sign out</button></div><div id="v"></div></main></div>`;
   ({ dash, stock: () => list("stock"), sold: () => list("sold"), add: addPage, sell: () => sellPage(arg), tasjil: tasjilPage, tools: toolsPage })[page]();
 }
 function countUp() { document.querySelectorAll("[data-n]").forEach(el => { const n = +el.dataset.n, t0 = performance.now(), f = t => { const p = Math.min(1, (t - t0) / 900); el.textContent = Math.round(n * (1 - (1 - p) ** 3)).toLocaleString("fr-FR"); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }); }
@@ -59,47 +105,47 @@ function countUp() { document.querySelectorAll("[data-n]").forEach(el => { const
 // ---------- dashboard ----------
 async function dash() { $("v").innerHTML = '<div class="bento"><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div></div>';
   try { const [s, sl] = await Promise.all([api("/dashboard/summary"), api("/sales?page_size=5")]), name = (session.user.email || "").split("@")[0], tot = (s.tunisien + s.parallele) || 1;
-    $("v").innerHTML = `<div class="bento"><div class="card span2 hero"><small class="mut">👋 Welcome, ${esc(name)}</small><div class="big"><span data-n="${s.stock_value_tnd}">0</span> <small>TND</small></div><small class="mut">Total stock value (purchase price)</small>
+    $("v").innerHTML = `<div class="bento"><div class="card span2 hero"><small class="mut">{{heart}} Welcome, ${esc(name)}</small><div class="big"><span data-n="${s.stock_value_tnd}">0</span> <small>TND</small></div><small class="mut">Total stock value (purchase price)</small>
     <div class="mini"><div><small>Revenue</small><b data-n="${s.revenue_tnd}">0</b></div><div><small>Margin</small><b class="up">+<span data-n="${s.gross_margin_tnd}">0</span></b></div><div><small>Sold</small><b>${s.sold}</b></div></div>
-    <div class="acts"><button class="pill" onclick="go('add')">➕ Add phone</button><button class="pill w" onclick="go('sell')">💰 Scan to sell</button></div><div class="orb"></div></div>
+    <div class="acts"><button class="pill" onclick="go('add')">{{plus}} Add phone</button><button class="pill w" onclick="go('sell')">{{banknote}} Scan to sell</button></div><div class="orb"></div></div>
     <div class="card"><h3>Stock split</h3><div class="ring" style="--p:${Math.round(s.tunisien / tot * 100)}%"><div><b>${s.in_stock}</b><small>In stock</small></div></div><div class="leg"><span><i class="d1"></i>Tunisien ${s.tunisien}</span><span><i class="d2"></i>Parallèle ${s.parallele}</span></div></div>
-    <div class="card span2"><h3>🧾 Latest sales</h3><div class="scroll"><table class="tbl"><tbody>${sl.items.map((d, i) => `<tr style="animation-delay:${i * 60}ms"><td><b>${esc(d.model || "—")}</b><br><small>${esc(d.imei1 || "")}</small></td><td>${esc((d.sale || {}).client_name || "—")}</td><td class="pr"><b>${fmt((d.sale || {}).sale_price)}</b></td></tr>`).join("") || "<tr><td class='mut'>—</td></tr>"}</tbody></table></div></div>
-    <div class="card"><h3>🛡️ Sajalni</h3><div class="big" style="color:var(--${s.blocked_in_stock ? "bad" : "ok"})">${s.blocked_in_stock}</div><small class="mut">phones blocked in stock</small><br><button class="pill g" style="margin-top:10px" onclick="go('tasjil')">Review</button></div></div>`; countUp();
+    <div class="card span2"><h3>{{receipt}} Latest sales</h3><div class="scroll"><table class="tbl"><tbody>${sl.items.map((d, i) => `<tr style="animation-delay:${i * 60}ms"><td><b>${esc(d.model || "—")}</b><br><small>${esc(d.imei1 || "")}</small></td><td>${esc((d.sale || {}).client_name || "—")}</td><td class="pr"><b>${fmt((d.sale || {}).sale_price)}</b></td></tr>`).join("") || "<tr><td class='mut'>—</td></tr>"}</tbody></table></div></div>
+    <div class="card"><h3>{{shield}} Sajalni</h3><div class="big" style="color:var(--${s.blocked_in_stock ? "bad" : "ok"})">${s.blocked_in_stock}</div><small class="mut">phones blocked in stock</small><br><button class="pill g" style="margin-top:10px" onclick="go('tasjil')">Review</button></div></div>`; countUp();
   } catch (e) { toast(e.message); } }
 
 // ---------- lists (stock + sold) ----------
 const L = { stock: { page: 1, q: "", cat: "", from: "", to: "" }, sold: { page: 1, q: "", from: "", to: "" } }, ROWS = {};
 function list(kind) { const st = L[kind], sold = kind === "sold";
   $("v").innerHTML = `<div class="card"><div class="bar"><input class="grow" placeholder="Search IMEI, S/N, model…" value="${esc(st.q)}" oninput="clearTimeout(window.tq);window.tq=setTimeout(()=>{L.${kind}.q=this.value;L.${kind}.page=1;load('${kind}')},250)">
-  ${sold ? "" : [["", "All types"], ["tunisien", "Tunisien"], ["parallele", "Parallèle"], ["repair", "🔧 Repaired"]].map(([c, l]) => `<button class="pill ${st.cat === c ? "on" : "g"}" onclick="L.stock.cat='${c}';L.stock.page=1;list('stock')">${l}</button>`).join("")}
+  ${sold ? "" : [["", "All types"], ["tunisien", "Tunisien"], ["parallele", "Parallèle"], ["repair", "{{wrench}} Repaired"]].map(([c, l]) => `<button class="pill ${st.cat === c ? "on" : "g"}" onclick="L.stock.cat='${c}';L.stock.page=1;list('stock')">${l}</button>`).join("")}
   <input type="date" value="${st.from}" onchange="L.${kind}.from=this.value;L.${kind}.page=1;load('${kind}')"><input type="date" value="${st.to}" onchange="L.${kind}.to=this.value;L.${kind}.page=1;load('${kind}')">
-  ${sold ? "" : `<button class="pill" onclick="go('add')">➕ Add phone</button>`}</div>
+  ${sold ? "" : `<button class="pill" onclick="go('add')">{{plus}} Add phone</button>`}</div>
   <div class="scroll"><table class="tbl"><thead><tr><th>Phone</th><th>IMEI / S/N</th><th>Type &amp; supplier</th><th>Sajalni</th><th>${sold ? "Sale" : "Price"}</th><th></th></tr></thead><tbody id="tb"><tr><td colspan="6">…</td></tr></tbody></table></div><div class="pager" id="pg"></div></div>`; load(kind); }
 async function load(kind) { const st = L[kind], sold = kind === "sold", p = new URLSearchParams({ page: st.page, page_size: 10 });
   if (!sold) { p.set("status", st.cat === "repair" ? "repair" : "in_stock"); if (st.cat && st.cat !== "repair") p.set("category", st.cat); }
   if (st.q) p.set("q", st.q); if (st.from) p.set("date_from", st.from); if (st.to) p.set("date_to", st.to);
   try { const r = await api((sold ? "/sales?" : "/devices?") + p), pages = Math.max(1, Math.ceil(r.total / 10)); if (st.page > pages) { st.page = pages; return load(kind); }
     ROWS[kind] = r.items; $("tb").innerHTML = r.items.map((x, i) => row(x, i, kind)).join("") || '<tr><td colspan="6" class="mut">—</td></tr>';
-    $("pg").innerHTML = `<button class="pill g" ${st.page <= 1 ? "disabled" : ""} onclick="L.${kind}.page--;load('${kind}')">←</button><span>Page ${st.page} / ${pages} · ${r.total}</span><button class="pill g" ${st.page >= pages ? "disabled" : ""} onclick="L.${kind}.page++;load('${kind}')">→</button>`;
+    $("pg").innerHTML = `<button class="pill g" ${st.page <= 1 ? "disabled" : ""} onclick="L.${kind}.page--;load('${kind}')">{{arrow_left}}</button><span>Page ${st.page} / ${pages} · ${r.total}</span><button class="pill g" ${st.page >= pages ? "disabled" : ""} onclick="L.${kind}.page++;load('${kind}')">{{arrow_right}}</button>`;
   } catch (e) { toast(e.message); } }
 function row(x, i, kind) { const s = x.sale || {}, rep = x.status === "repair", sold = kind === "sold";
-  const c1 = sold ? `<b>${esc(x.model || "—")}</b><br><small>${fdate(s.sale_date)}${s.client_name ? " · 👤 " + esc(s.client_name) : ""}</small>` : `<b>${esc(x.model || "—")}</b><br><small>${rep && x.owner_name ? "👤 " + esc(x.owner_name) + " · " : ""}${esc(specs(x))}</small>`;
-  const c5 = sold ? `<b class="pr">${fmt(s.sale_price)}</b><br><small>Margin: ${s.sale_price != null && x.purchase_price != null ? fmt(s.sale_price - x.purchase_price) : "—"}</small>` : rep ? "<small>🔧 Repair</small>" : `<b class="pr">${fmt(x.expected_sale_price)}</b><br><small>Buy: ${fmt(x.purchase_price)}</small>`;
-  const acts = sold ? `<button class="pill w" title="Receipt" onclick="receipt(${i})">🧾</button><button class="ico" title="Edit Sajalni status" onclick="editSaj(${i})">🛡️</button><button class="ico" title="History" onclick="hist('${x.id}')">🕘</button><button class="ico" title="Return / defective" onclick="statusForm('${x.id}')">↩️</button>`
-    : `${rep ? "" : `<button class="pill w" title="Sell" onclick="go('sell','${esc(x.imei1 || x.serial_number || "")}')">💰</button>`}<button class="ico" onclick="readDev(${i})">👁️</button><button class="ico" onclick="editDev(${i})">✏️</button><button class="ico" title="History" onclick="hist('${x.id}')">🕘</button><button class="ico" title="Status" onclick="statusForm('${x.id}')">⚙️</button><button class="ico" onclick="delDev(${i})">🗑️</button>`;
-  return `<tr style="animation-delay:${i * 40}ms"><td>${c1}</td><td><code>${esc(x.imei1 || "—")}</code><br><small>S/N ${esc(x.serial_number || "—")}</small></td><td><b class="t-${x.category}">${CAT[x.category]}</b><br><small>${rep ? "🔧 Repaired" : esc(x.supplier_name || "—")}</small></td><td>${rep ? "<small>—</small>" : badge(x.sajalni_status)}</td><td>${c5}</td><td><div class="acts">${acts}</div></td></tr>`; }
+  const c1 = sold ? `<b>${esc(x.model || "—")}</b><br><small>${fdate(s.sale_date)}${s.client_name ? " · {{user}} " + esc(s.client_name) : ""}</small>` : `<b>${esc(x.model || "—")}</b><br><small>${rep && x.owner_name ? "{{user}} " + esc(x.owner_name) + " · " : ""}${esc(specs(x))}</small>`;
+  const c5 = sold ? `<b class="pr">${fmt(s.sale_price)}</b><br><small>Margin: ${s.sale_price != null && x.purchase_price != null ? fmt(s.sale_price - x.purchase_price) : "—"}</small>` : rep ? "<small>{{wrench}} Repair</small>" : `<b class="pr">${fmt(x.expected_sale_price)}</b><br><small>Buy: ${fmt(x.purchase_price)}</small>`;
+  const acts = sold ? `<button class="pill w" title="Receipt" onclick="receipt(${i})">{{receipt}}</button><button class="ico" title="Edit Sajalni status" onclick="editSaj(${i})">{{shield}}</button><button class="ico" title="History" onclick="hist('${x.id}')">{{clock}}</button><button class="ico" title="Return / defective" onclick="statusForm('${x.id}')">{{undo}}</button>`
+    : `${rep ? "" : `<button class="pill w" title="Sell" onclick="go('sell','${esc(x.imei1 || x.serial_number || "")}')">{{banknote}}</button>`}<button class="ico" onclick="readDev(${i})">{{eye}}</button><button class="ico" onclick="editDev(${i})">{{pencil}}</button><button class="ico" title="History" onclick="hist('${x.id}')">{{clock}}</button><button class="ico" title="Status" onclick="statusForm('${x.id}')">{{sliders}}</button><button class="ico" onclick="delDev(${i})">{{trash}}</button>`;
+  return `<tr style="animation-delay:${i * 40}ms"><td>${c1}</td><td><code>${esc(x.imei1 || "—")}</code><br><small>S/N ${esc(x.serial_number || "—")}</small></td><td><b class="t-${x.category}">${CAT[x.category]}</b><br><small>${rep ? "{{wrench}} Repaired" : esc(x.supplier_name || "—")}</small></td><td>${rep ? "<small>—</small>" : badge(x.sajalni_status)}</td><td>${c5}</td><td><div class="acts">${acts}</div></td></tr>`; }
 const readDev = i => { const x = ROWS.stock[i]; modal(`<h3>${esc(x.model || "—")}</h3><dl>${[["Owner", x.owner_name], ["Color", x.color], ["RAM / ROM", (x.ram || "—") + " / " + (x.rom || "—") + " GB"], ["IMEI 2", x.imei2], ["S/N", x.serial_number], ["Supplier", x.supplier_name], ["Purchase", fmt(x.purchase_price)], ["Expected", fmt(x.expected_sale_price)], ["Sajalni", SAJ[x.sajalni_status]], ["Notes", x.notes]].filter(([k, v]) => k !== "Owner" || v).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v || "—")}</dd>`).join("")}</dl><button class="pill g" onclick="closeModal()">Close</button>`); };
 const editDev = i => { modal(`<h3>Edit phone</h3>${formHtml(ROWS.stock[i])}`); toggleRepair(); };
 async function delDev(i) { const x = ROWS.stock[i]; if (!confirm(`Delete "${x.model || x.imei1 || "this phone"}"?`)) return; try { await api("/devices/" + x.id, { method: "DELETE" }); load("stock"); } catch (e) { toast(e.message); } }
 // edit the Sajalni status of a SOLD phone (only this field)
-const editSaj = i => { const x = ROWS.sold[i]; modal(`<h3>🛡️ ${esc(x.model || "—")}</h3><small>Sajalni status</small><select id="ss"><option value="">Not checked</option>${Object.entries(SAJ).map(([k, v]) => `<option value="${k}" ${x.sajalni_status === k ? "selected" : ""}>${v}</option>`).join("")}</select><button class="pill" onclick="saveSaj('${x.id}')">Save</button>`); };
+const editSaj = i => { const x = ROWS.sold[i]; modal(`<h3>{{shield}} ${esc(x.model || "—")}</h3><small>Sajalni status</small><select id="ss"><option value="">Not checked</option>${Object.entries(SAJ).map(([k, v]) => `<option value="${k}" ${x.sajalni_status === k ? "selected" : ""}>${v}</option>`).join("")}</select><button class="pill" onclick="saveSaj('${x.id}')">Save</button>`); };
 async function saveSaj(id) { try { await api(`/devices/${id}/sajalni`, { method: "PATCH", body: JSON.stringify({ sajalni_status: $("ss").value || null }) }); closeModal(); toast("Saved", true); load("sold"); } catch (e) { toast(e.message); } }
 
 // ---------- add / edit phone (with "Repaired phone" option) ----------
 function formHtml(d = {}) { const rep = !!d.is_repair, v = k => esc(d[k] ?? ""), opt = (a, sel) => a.map(x => `<option value="${x}" ${sel == x ? "selected" : ""}>${x} GB</option>`).join("");
-  const fld = (k, ph, sc) => `<div class="row"><input id="${k}" placeholder="${ph}" value="${v(k)}" ${/imei/.test(k) ? 'inputmode="numeric"' : ""}>${sc ? `<button type="button" class="ico" onclick="scan('${k}')">📷</button>` : ""}</div>`;
+  const fld = (k, ph, sc) => `<div class="row"><input id="${k}" placeholder="${ph}" value="${v(k)}" ${/imei/.test(k) ? 'inputmode="numeric"' : ""}>${sc ? `<button type="button" class="ico" onclick="scan('${k}')">{{camera}}</button>` : ""}</div>`;
   return `<form class="grid2" onsubmit="saveForm(event,'${d.id || ""}')">
-  <label class="full chk"><input type="checkbox" id="is_repair" ${rep ? "checked" : ""} onchange="toggleRepair()"> 🔧 Repaired phone (a customer's phone, not for sale)</label>
+  <label class="full chk"><input type="checkbox" id="is_repair" ${rep ? "checked" : ""} onchange="toggleRepair()"> {{wrench}} Repaired phone (a customer's phone, not for sale)</label>
   <div class="full" id="ownw" style="display:${rep ? "block" : "none"}"><input id="owner_name" placeholder="Owner name" value="${v("owner_name")}"></div>
   <small class="full mut" id="rh" style="display:none">IMEI 1, IMEI 2 and Serial Number are optional for repaired phones.</small>
   <select class="full" id="category"><option value="tunisien">Smartphone Tunisien</option><option value="parallele" ${d.category === "parallele" ? "selected" : ""}>Smartphone Parallèle</option></select>
@@ -120,7 +166,7 @@ async function saveForm(e, id) { e.preventDefault(); const g = k => $(k).value, 
 
 // ---------- sell + receipt ----------
 let cur = null;
-function sellPage(pre) { $("v").innerHTML = `<div class="card" style="max-width:640px"><div class="row"><input id="code" placeholder="Scan or type IMEI / Serial Number" onkeydown="if(event.key==='Enter')findDev()"><button class="ico" onclick="scan('code',findDev)">📷</button></div>
+function sellPage(pre) { $("v").innerHTML = `<div class="card" style="max-width:640px"><div class="row"><input id="code" placeholder="Scan or type IMEI / Serial Number" onkeydown="if(event.key==='Enter')findDev()"><button class="ico" onclick="scan('code',findDev)">{{camera}}</button></div>
   <button class="pill" style="margin-top:8px" onclick="findDev()">Find phone</button><div id="found"></div></div>`; $("code").focus(); if (pre) { $("code").value = pre; findDev(); } }
 async function findDev() { try { cur = await api("/devices/lookup/" + encodeURIComponent($("code").value.trim()));
     if (cur.status === "repair") throw new Error("This phone is in the repair list, not for sale"); if (cur.status !== "in_stock") throw new Error("This phone is already sold");
@@ -130,7 +176,7 @@ async function findDev() { try { cur = await api("/devices/lookup/" + encodeURIC
 async function doSell() { const price = $("price").value;
   if (["non_autorise", "bloque"].includes(cur.sajalni_status) && !confirm(`Sajalni: ${SAJ[cur.sajalni_status]}. Sell anyway?`)) return; if (!price && !confirm("No price entered. Sell anyway?")) return;
   try { await api("/sales", { method: "POST", body: JSON.stringify({ device_id: cur.id, sale_price: price ? +price : null, client_name: $("client").value }) }); toast("Sale recorded", true);
-    sellPage(); const c = document.createElement("div"); c.className = "check"; c.textContent = "✓"; document.body.appendChild(c); setTimeout(() => c.remove(), 1200); } catch (e) { toast(e.message); } }
+    sellPage(); const c = document.createElement("div"); c.className = "check"; c.innerHTML = "{{check}}"; document.body.appendChild(c); setTimeout(() => c.remove(), 1200); } catch (e) { toast(e.message); } }
 function receipt(i) { const d = ROWS.sold[i], s = d.sale || {}, r = (k, v) => `<tr><th>${k}</th><td>${esc(v)}</td></tr>`, w = window.open("", "_blank"); if (!w) return toast("Allow pop-ups to print");
   w.document.write(`<!doctype html><title>Receipt</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet"><style>body{font:15px Gotham,Montserrat,Arial,sans-serif;margin:32px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:9px;text-align:left}th{width:35%}.l{border-bottom:1px solid #000;display:inline-block;width:200px}</style>
   <div style="text-align:center;margin-bottom:18px"><div style="font:900 72px Montserrat,Arial;letter-spacing:12px;line-height:1">NSI</div><div style="font:600 15px Montserrat,Arial;letter-spacing:3px;margin-top:8px">NIDHAL SERVICES INFORMATIQUES</div></div>
@@ -144,26 +190,26 @@ const stt = x => ((TJ.last[x.id] || {}).result_status || x.sajalni_status) || "a
 const openSajalni = () => window.open("https://sajalni.tn", "_blank", "noopener");
 async function tasjilPage() { $("v").innerHTML = '<div class="card sk"></div>'; try { const [r, l] = await Promise.all([api("/devices?status=in_stock&category=parallele&page_size=50"), api("/tasjil/last")]); TJ.d = r.items; TJ.last = l; tjRender(); } catch (e) { toast(e.message); } }
 function tjRender() { const c = k => TJ.d.filter(x => grp(stt(x)) === k).length;
-  $("v").innerHTML = `<div class="bento" style="margin-bottom:14px">${[["a_verifier", "🔎 To check"], ["autorise", "✅ Authorised"], ["temp", "⏳ Temporarily registered"], ["bloque", "⛔ Blocked"]].map(([k, l]) => `<div class="card"><small class="mut">${l}</small><div class="big">${c(k)}</div></div>`).join("")}</div>
-  <div class="bar"><button class="pill" onclick="openSajalni()">↗️ Open sajalni.tn</button>${[["all", "All"], ["a_verifier", "To check"], ["autorise", "Authorised"], ["bloque", "Blocked"]].map(([k, l]) => `<button class="pill ${TJ.f === k ? "on" : "g"}" onclick="TJ.f='${k}';tjRender()">${l}</button>`).join("")}</div>
+  $("v").innerHTML = `<div class="bento" style="margin-bottom:14px">${[["a_verifier", "{{search}} To check"], ["autorise", "{{check_circle}} Authorised"], ["temp", "{{hourglass}} Temporarily registered"], ["bloque", "{{ban}} Blocked"]].map(([k, l]) => `<div class="card"><small class="mut">${l}</small><div class="big">${c(k)}</div></div>`).join("")}</div>
+  <div class="bar"><button class="pill" onclick="openSajalni()">{{external}} Open sajalni.tn</button>${[["all", "All"], ["a_verifier", "To check"], ["autorise", "Authorised"], ["bloque", "Blocked"]].map(([k, l]) => `<button class="pill ${TJ.f === k ? "on" : "g"}" onclick="TJ.f='${k}';tjRender()">${l}</button>`).join("")}</div>
   <div class="tj">${TJ.d.map((x, i) => [x, i]).filter(([x]) => TJ.f === "all" || grp(stt(x)) === TJ.f).map(([x, i]) => `<div class="card"><div class="row"><b>${esc(x.model || "—")}</b>${badge(stt(x))}</div><small>${esc(x.supplier_name || "—")} · ${fmt(x.expected_sale_price)}</small>
-  <div class="imei"><code>${esc(x.imei1 || x.serial_number || "—")}</code><button class="ico" onclick="copy('${esc(x.imei1 || "")}')">📋</button></div><small>${TJ.last[x.id] ? fdate(TJ.last[x.id].checked_at) : "—"}</small>
-  <div class="acts" style="margin-top:10px"><button class="pill" onclick="checkSaj(${i})">↗️ Check on Sajalni</button></div></div>`).join("")}</div>`; }
+  <div class="imei"><code>${esc(x.imei1 || x.serial_number || "—")}</code><button class="ico" onclick="copy('${esc(x.imei1 || "")}')">{{copy}}</button></div><small>${TJ.last[x.id] ? fdate(TJ.last[x.id].checked_at) : "—"}</small>
+  <div class="acts" style="margin-top:10px"><button class="pill" onclick="checkSaj(${i})">{{external}} Check on Sajalni</button></div></div>`).join("")}</div>`; }
 function checkSaj(i) { const x = TJ.d[i]; openSajalni(); copy(x.imei1 || x.serial_number || ""); toast("IMEI copied. Paste it on Sajalni, then record the result.", true);
   setTimeout(() => modal(`<h3>${esc(x.model || "—")}</h3><select id="rs">${Object.entries(RES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select><input id="rsrc" value="Official site (manual)"><input id="rmsg" placeholder="Reference / message (optional)"><button class="pill" onclick="saveCheck('${x.id}')">Record result</button>`), 400); }
 async function saveCheck(id) { try { await api(`/devices/${id}/tasjil-checks`, { method: "POST", body: JSON.stringify({ result_status: $("rs").value, source: $("rsrc").value, message: $("rmsg").value }) }); closeModal(); toast("Saved", true); tasjilPage(); } catch (e) { toast(e.message); } }
 
 // ---------- history, status change, tools (alerts, repair list, exports) ----------
 const FN = { stock: "stock", sales: "ventes", tasjil: "tasjil" };
-const hist = async id => { try { const h = await api(`/devices/${id}/history`); modal(`<h3>🕘 History</h3>${h.map(x => `<p><small>${fdate(x.at)}</small><br>${esc(x.text)}</p>`).join("")}<button class="pill g" onclick="closeModal()">Close</button>`); } catch (e) { toast(e.message); } };
-const statusForm = id => modal(`<h3>⚙️ Change status</h3><select id="st"><option value="in_stock">Back to stock</option><option value="repair">Repair list</option><option value="defective">Defective</option></select><input id="sr" placeholder="Reason (required)"><button class="pill" onclick="saveStatus('${id}')">Save</button>`);
+const hist = async id => { try { const h = await api(`/devices/${id}/history`); modal(`<h3>{{clock}} History</h3>${h.map(x => `<p><small>${fdate(x.at)}</small><br>${esc(x.text)}</p>`).join("")}<button class="pill g" onclick="closeModal()">Close</button>`); } catch (e) { toast(e.message); } };
+const statusForm = id => modal(`<h3>{{sliders}} Change status</h3><select id="st"><option value="in_stock">Back to stock</option><option value="repair">Repair list</option><option value="defective">Defective</option></select><input id="sr" placeholder="Reason (required)"><button class="pill" onclick="saveStatus('${id}')">Save</button>`);
 async function saveStatus(id) { try { await api(`/devices/${id}/status`, { method: "POST", body: JSON.stringify({ status: $("st").value, reason: $("sr").value }) }); closeModal(); toast("Saved", true); shell(); } catch (e) { toast(e.message); } }
 async function toolsPage() { $("v").innerHTML = '<div class="card sk"></div>';
   try { const [a, r, d] = await Promise.all([api("/alerts?days=30"), api("/devices?status=repair&page_size=50"), api("/devices?status=defective&page_size=50")]);
-    const sec = (t, arr, f) => `<h3 style="margin-top:18px">${t} (${arr.length})</h3><div class="tj">${arr.map(x => `<div class="card"><b>${esc(x.model || "—")}</b> <small>${CAT[x.category]}</small><br><code>${esc(x.imei1 || x.serial_number || "—")}</code><br><small>${f(x)}</small><div class="acts" style="margin-top:8px"><button class="ico" onclick="hist('${x.id}')">🕘</button><button class="ico" onclick="statusForm('${x.id}')">⚙️</button></div></div>`).join("") || '<small class="mut">Nothing here</small>'}</div>`;
-    $("v").innerHTML = sec("🔎 Parallel phones never checked", a.never, () => "") + sec("⏳ Old or unclear Sajalni checks", a.old, () => "") + sec("🐌 Slow movers (30+ days in stock)", a.slow, x => x.days + " days in stock")
-      + sec("🔧 Repair list", r.items, x => esc(x.owner_name || x.status_reason || "")) + sec("❌ Defective", d.items, x => esc(x.status_reason || ""))
-      + `<h3 style="margin-top:18px">Exports</h3><div class="acts">${["stock", "sales", "tasjil"].map(k => `<button class="pill g" onclick="exportCsv('${k}')">⬇️ ${FN[k]}.csv</button><button class="pill g" onclick="exportPrint('${k}')">🖨️ ${FN[k]} PDF</button>`).join("")}</div>`;
+    const sec = (t, arr, f) => `<h3 style="margin-top:18px">${t} (${arr.length})</h3><div class="tj">${arr.map(x => `<div class="card"><b>${esc(x.model || "—")}</b> <small>${CAT[x.category]}</small><br><code>${esc(x.imei1 || x.serial_number || "—")}</code><br><small>${f(x)}</small><div class="acts" style="margin-top:8px"><button class="ico" onclick="hist('${x.id}')">{{clock}}</button><button class="ico" onclick="statusForm('${x.id}')">{{sliders}}</button></div></div>`).join("") || '<small class="mut">Nothing here</small>'}</div>`;
+    $("v").innerHTML = sec("{{search}} Parallel phones never checked", a.never, () => "") + sec("{{hourglass}} Old or unclear Sajalni checks", a.old, () => "") + sec("{{clock}} Slow movers (30+ days in stock)", a.slow, x => x.days + " days in stock")
+      + sec("{{wrench}} Repair list", r.items, x => esc(x.owner_name || x.status_reason || "")) + sec("{{x_circle}} Defective", d.items, x => esc(x.status_reason || ""))
+      + `<h3 style="margin-top:18px">Exports</h3><div class="acts">${["stock", "sales", "tasjil"].map(k => `<button class="pill g" onclick="exportCsv('${k}')">{{download}} ${FN[k]}.csv</button><button class="pill g" onclick="exportPrint('${k}')">{{printer}} ${FN[k]} PDF</button>`).join("")}</div>`;
   } catch (e) { toast(e.message); } }
 async function exportRows(k) { const r = await api("/export/" + k); if (!r.length) throw new Error("Nothing to export"); return r; }
 async function exportCsv(k) { try { const r = await exportRows(k), h = Object.keys(r[0]), q = (v, c) => /imei|serial/.test(c) && v ? `="${v}"` : `"${String(v ?? "").replace(/"/g, '""')}"`;
@@ -175,12 +221,12 @@ async function exportPrint(k) { try { const r = await exportRows(k), h = Object.
 // ---------- FR / EN (main labels) ----------
 const FR = { "Dashboard": "Tableau de bord", "Add phone": "Ajouter un téléphone", "Sell": "Vendre", "Sold phones": "Téléphones vendus", "Tools": "Outils", "Sign out": "Déconnexion", "Sign in": "Connexion", "Save": "Enregistrer", "Close": "Fermer",
   "Find phone": "Chercher le téléphone", "Confirm sale": "Confirmer la vente", "Phone": "Téléphone", "Price": "Prix", "Sale": "Vente", "Type & supplier": "Type et fournisseur", "Revenue": "Chiffre d'affaires", "Margin": "Marge", "Sold": "Vendus", "In stock": "En stock",
-  "Stock split": "Répartition du stock", "🧾 Latest sales": "🧾 Dernières ventes", "Total stock value (purchase price)": "Valeur du stock (prix d'achat)", "phones blocked in stock": "téléphones bloqués en stock", "Review": "Examiner", "➕ Add phone": "➕ Ajouter un téléphone", "💰 Scan to sell": "💰 Scanner pour vendre",
-  "All types": "Tous types", "🔧 Repaired": "🔧 Réparés", "🔎 To check": "🔎 À vérifier", "✅ Authorised": "✅ Autorisés", "⏳ Temporarily registered": "⏳ Enregistrés temp.", "⛔ Blocked": "⛔ Bloqués", "All": "Tous", "To check": "À vérifier", "Authorised": "Autorisés", "Blocked": "Bloqués",
-  "↗️ Open sajalni.tn": "↗️ Ouvrir sajalni.tn", "↗️ Check on Sajalni": "↗️ Vérifier sur Sajalni", "Record result": "Enregistrer le résultat", "🕘 History": "🕘 Historique", "⚙️ Change status": "⚙️ Changer le statut", "Back to stock": "Retour en stock", "Repair list": "Liste de réparation", "Defective": "Défectueux", "Not checked": "Non vérifié",
+  "Stock split": "Répartition du stock", "Latest sales": "Dernières ventes", "Total stock value (purchase price)": "Valeur du stock (prix d'achat)", "phones blocked in stock": "téléphones bloqués en stock", "Review": "Examiner", "Add phone": "Ajouter un téléphone", "Scan to sell": "Scanner pour vendre",
+  "All types": "Tous types", "Repaired": "Réparés", "To check": "À vérifier", "Authorised": "Autorisés", "Temporarily registered": "Enregistrés temp.", "Blocked": "Bloqués", "All": "Tous", "To check": "À vérifier", "Authorised": "Autorisés", "Blocked": "Bloqués",
+  "Open sajalni.tn": "Ouvrir sajalni.tn", "Check on Sajalni": "Vérifier sur Sajalni", "Record result": "Enregistrer le résultat", "History": "Historique", "Change status": "Changer le statut", "Back to stock": "Retour en stock", "Repair list": "Liste de réparation", "Defective": "Défectueux", "Not checked": "Non vérifié",
   "Sajalni status": "Statut Sajalni", "Password": "Mot de passe", "Search…": "Rechercher…", "Model": "Modèle", "Owner name": "Nom du propriétaire", "Client name": "Nom du client", "Sale price TND": "Prix de vente TND", "Purchase price TND": "Prix d'achat TND", "Expected sale TND": "Prix de vente prévu TND", "Supplier": "Fournisseur", "Reason (required)": "Motif (obligatoire)",
-  "Color (pick or type)": "Couleur (choisir ou saisir)", "Scan or type IMEI / Serial Number": "Scanner ou saisir IMEI / N° de série", "🔧 Repaired phone (a customer's phone, not for sale)": "🔧 Téléphone réparé (appartient à un client, pas à vendre)", "IMEI 1, IMEI 2 and Serial Number are optional for repaired phones.": "IMEI 1, IMEI 2 et N° de série sont facultatifs pour les téléphones réparés.", "Sajalni status: not checked": "Statut Sajalni : non vérifié" };
-const RX = [[/^👋 Welcome, (.*)$/, "👋 Bienvenue, $1"]];
+  "Color (pick or type)": "Couleur (choisir ou saisir)", "Scan or type IMEI / Serial Number": "Scanner ou saisir IMEI / N° de série", "Repaired phone (a customer's phone, not for sale)": "Téléphone réparé (appartient à un client, pas à vendre)", "IMEI 1, IMEI 2 and Serial Number are optional for repaired phones.": "IMEI 1, IMEI 2 et N° de série sont facultatifs pour les téléphones réparés.", "Sajalni status: not checked": "Statut Sajalni : non vérifié" };
+const RX = [[/^Welcome, (.*)$/, "Bienvenue, $1"]];
 let LANG = localStorage.getItem("lang") || "en";
 function tx(s) { const t = s.trim(); if (!t || LANG !== "fr") return s; if (FR[t]) return s.replace(t, FR[t]); for (const [r, v] of RX) if (r.test(t)) return s.replace(t, t.replace(r, v)); return s; }
 function trNode(n) { if (n.nodeType === 3) { const v = tx(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; return; } if (n.nodeType !== 1) return;
