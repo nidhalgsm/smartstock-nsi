@@ -96,7 +96,7 @@ async function boot(s) {
 // calling Supabase methods inside this callback can deadlock (blank page): defer and use the session it gives us
 sb.auth.onAuthStateChange((ev, s) => setTimeout(() => boot(s), 0));
 function login() {
-  $("app").innerHTML = `<div class="login"><form class="card lcard" onsubmit="doLogin(event)"><h1><img class="mark" src="favicon.svg" alt="">SmartStock <span>TN</span></h1><p class="mut">Stock, sales and Sajalni checks in one place.</p>
+  $("app").innerHTML = `<div class="login"><form class="card lcard" onsubmit="doLogin(event)"><h1><img class="mark" src="${ASSETS.favicon}" alt="">SmartStock <span>TN</span></h1><p class="mut">Stock, sales and Sajalni checks in one place.</p>
   <input id="em" type="email" placeholder="Email" autocomplete="username" required><input id="pw" type="password" placeholder="Password" autocomplete="current-password" required>
   <button class="pill" style="width:100%;margin-top:8px">Sign in</button><div id="lm"></div></form>
   <div class="stage"><div class="float"><div class="phone"><div class="f fr"><div class="scr"><div><b>NSI</b><br><small>SmartStock</small></div></div></div><div class="f bk"><i></i></div><div class="f sd sl"></div><div class="f sd sr"></div></div></div></div></div>`;
@@ -108,7 +108,7 @@ async function doLogin(e) { e.preventDefault(); const { error } = await sb.auth.
 const NAV = [["dash", "{{dash}}", "Dashboard"], ["stock", "{{box}}", "Stock"], ["add", "{{plus}}", "Add phone"], ["sell", "{{banknote}}", "Sell"], ["sold", "{{receipt}}", "Sold phones"], ["tasjil", "{{shield}}", "Tasjil Sajalni"], ["tools", "{{toolbox}}", "Tools"], ["repairs", "{{wrench}}", "Repairs"], ["warranty", "{{award}}", "Warranty"]];
 const go = (p, a = null) => { page = p; arg = a; shell(); };
 function shell() {
-  $("app").innerHTML = `<div class="app"><aside class="rail"><div class="logo"><img class="mark" src="favicon.svg" alt="">SmartStock</div>${NAV.map(([k, e, l]) => `<button class="${k === page ? "on" : ""}" onclick="go('${k}')"><span>${e}</span><em>${l}</em></button>`).join("")}</aside>
+  $("app").innerHTML = `<div class="app"><aside class="rail"><div class="logo"><img class="mark" src="${ASSETS.favicon}" alt="">SmartStock</div>${NAV.map(([k, e, l]) => `<button class="${k === page ? "on" : ""}" onclick="go('${k}')"><span>${e}</span><em>${l}</em></button>`).join("")}</aside>
   <main><div class="top"><h1>${NAV.find(n => n[0] === page)[2]}</h1><button class="ico" onclick="quick()">{{search}} Search <kbd>Ctrl K</kbd></button>
   <button class="ico bell" title="Notifications" onclick="bellOpen()">{{bell}}<i id="bellN" class="dotn"></i></button><input type="color" id="acc" title="Accent colour" oninput="setAccent(this.value)" value="${ACC}" style="width:38px;height:38px;padding:2px;margin:0"><button class="ico" onclick="toggleLang()">${LANG === "fr" ? "EN" : "FR"}</button><button class="ico" onclick="toggleTheme()">{{contrast}}</button><button class="pill g" onclick="sb.auth.signOut()">Sign out</button></div><div id="v"></div></main></div>`;
   updateBell(); if (!window.BELL || Date.now() - window.bellAt > 60000) loadBell();
