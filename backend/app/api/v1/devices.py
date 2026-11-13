@@ -32,8 +32,7 @@ def create_device(d: DeviceIn, user=Depends(current_user)):
     if dup:
         raise HTTPException(409, f"This phone already exists ({dup})")
     data = d.model_dump(exclude_none=True)
-    if d.is_repair:  # customer's phone: never in sellable stock, no supplier, no Sajalni status
-        data["status"] = "repair"
+    if d.is_repair:  # repaired phone nobody collected: it is SOLD, so it stays in stock; no supplier / Sajalni status
         data.pop("supplier_name", None)
         data.pop("sajalni_status", None)
     row = sb.table("devices").insert(data).execute().data[0]
@@ -44,12 +43,14 @@ def create_device(d: DeviceIn, user=Depends(current_user)):
 @router.get("")
 def list_devices(status: Optional[str] = None, category: Optional[str] = None, q: Optional[str] = None,
                  page: int = 1, page_size: int = 10, date_from: Optional[str] = None,
-                 date_to: Optional[str] = None, user=Depends(current_user)):
+                 date_to: Optional[str] = None, is_repair: Optional[bool] = None, user=Depends(current_user)):
     qry = sb.table("devices").select("*", count="exact").is_("deleted_at", "null").order("created_at", desc=True)
     if status:
         qry = qry.eq("status", status)
     if category:
         qry = qry.eq("category", category)
+    if is_repair is not None:
+        qry = qry.eq("is_repair", is_repair)
     if clean_date(date_from):
         qry = qry.gte("purchase_date", date_from)
     if clean_date(date_to):

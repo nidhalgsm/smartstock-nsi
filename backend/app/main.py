@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core import settings
-from .api.v1 import devices, sales, dashboard, extras
+from .api.v1 import devices, sales, dashboard, extras, repairs
 
 app = FastAPI(title="SmartStock TN API")
 app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
                    allow_methods=["*"], allow_headers=["*"])
-for r in (devices.router, sales.router, dashboard.router, extras.router):
+for r in (devices.router, sales.router, dashboard.router, extras.router, repairs.router):
     app.include_router(r, prefix="/api/v1")
 
 

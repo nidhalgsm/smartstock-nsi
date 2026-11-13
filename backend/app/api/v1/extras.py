@@ -1,3 +1,5 @@
+import calendar
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,6 +10,11 @@ router = APIRouter(tags=["extras"])
 now = lambda: datetime.now(timezone.utc)
 iso = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))
 SAJ = ("autorise", "non_autorise", "bloque")
+
+
+def add_months(d, m):
+    y, mo = divmod(d.month - 1 + m, 12)
+    return d.replace(year=d.year + y, month=mo + 1, day=min(d.day, calendar.monthrange(d.year + y, mo + 1)[1]))
 
 
 class TasjilIn(BaseModel):
@@ -100,7 +107,32 @@ def alerts(days: int = 30, user=Depends(current_user)):
                 old.append(d)
         if iso(d["purchase_date"]) < cut:
             slow.append({**d, "days": (now() - iso(d["purchase_date"])).days})
-    return {"never": never, "old": old, "slow": sorted(slow, key=lambda x: -x["days"])}
+    wl = []  # warranties (phone 12 months, battery 3 months) ending soon
+    for s in fetch_all(lambda: sb.table("sales").select("id,sale_date,client_name,devices(model,imei1)")
+                       .gte("sale_date", (now() - timedelta(days=370)).isoformat()).order("id")):
+        for kind, m in (("phone", 12), ("battery", 3)):
+            end = add_months(iso(s["sale_date"]), m)
+            if now() <= end <= now() + timedelta(days=days):
+                dv = s.get("devices") or {}
+                wl.append({"kind": kind, "model": dv.get("model"), "imei1": dv.get("imei1"), "client_name": s["client_name"],
+                           "ends": end.isoformat(), "days": (end - now()).days})
+    return {"never": never, "old": old, "slow": sorted(slow, key=lambda x: -x["days"]), "warranty": wl,
+            "blocked": [d for d in devs if d["sajalni_status"] == "bloque"]}
+
+
+@router.get("/warranty/{code}")
+def warranty(code: str, user=Depends(current_user)):
+    """Warranty lookup by IMEI / serial: returns the sold phone with its latest sale."""
+    if not re.fullmatch(r"[A-Za-z0-9]{4,40}", code):
+        raise HTTPException(400, "Invalid code")
+    rows = sb.table("devices").select("*, sales!inner(*)").is_("deleted_at", "null").or_(
+        f"imei1.eq.{code},imei2.eq.{code},serial_number.eq.{code}").execute().data
+    if not rows:
+        raise HTTPException(404, "No sold phone with this IMEI / Serial Number")
+    d = rows[0]
+    s = d.pop("sales")
+    d["sale"] = max(s, key=lambda x: x["sale_date"]) if isinstance(s, list) else s
+    return d
 
 
 @router.get("/tasjil/last")
