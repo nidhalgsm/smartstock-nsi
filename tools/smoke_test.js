@@ -20,9 +20,16 @@ const fx = p => p.startsWith("/repairs/counts") ? { all: 1, ready: 1 } : p.start
   vm.runInThisContext(fs.readFileSync(path.join(__dirname, "..", "frontend", "app.js"), "utf8"));
   await new Promise(r => setTimeout(r, 20));
   const out = []; global.__errs = errs; global.__fx = fx;
-  vm.runInThisContext(`toast = m => __errs.push(m); api = async p => __fx(p); session = { user: { email: "a@b.c" } };`);
+  vm.runInThisContext(`toast = (m, ok) => { if (!ok) __errs.push(m); }; api = async p => __fx(p); session = { user: { email: "a@b.c" } };`);
   for (const k of ["dash", "stock", "add", "sell", "sold", "tasjil", "tools", "repairs", "warranty"]) { vm.runInThisContext(`page = "${k}"; shell();`); await new Promise(r => setTimeout(r, 20)); out.push(k + ":" + (els.v.innerHTML.length > 50 ? "ok" : "EMPTY")); }
   if (!vm.runInThisContext(`ic("dash")`).includes("<svg")) errs.push("ic() broken"); await vm.runInThisContext(`(async()=>{toggleLang(); toggleLang(); bellOpen(); quick(); repairForm(); repairForm(0); repairReceipt(0); repairWa(0); receipt(0); $("wc").value = "123456"; await findWarranty(); cleanScan("imei1", "IMEI: 490 154 203 237 518") === "490154203237518" || errs.push("cleanScan"); formHtml({ is_repair: true, owner_name: "Sam" }); row(ROWS.stock[0], 0, "stock"); row(ROWS.sold[0], 0, "sold");})()`);
+  for (const [k, v] of Object.entries({ category: "parallele", imei1: "869568089768622", imei2: "869568089768630", serial_number: "ASUDJV6119H00102", model: "Honor x7d", color: "#000000", ram: "8", rom: "256", purchase_price: "400", expected_sale_price: "450", notes: "", supplier_name: "Ahmed", sajalni_status: "" })) els[k] = Object.assign(el(), { value: v });
+  els.is_repair = Object.assign(el(), { checked: false }); global.__sent = null;
+  vm.runInThisContext(`api = async (p, o) => { if (o && o.method === "PATCH") __sent = { p, b: JSON.parse(o.body) }; return o && o.method ? {} : { items: [], total: 0 }; };`);
+  await vm.runInThisContext(`saveForm({ preventDefault() {} }, "dev-1")`);
+  const sb = (global.__sent || {}).b || {};
+  if (!global.__sent || global.__sent.p !== "/devices/dev-1" || sb.ram !== 8 || sb.rom !== 256 || sb.purchase_price !== 400 || sb.model !== "Honor x7d" || sb.imei2 !== "869568089768630" || sb.supplier_name !== "Ahmed" || sb.sajalni_status !== null) errs.push("edit save body wrong: " + JSON.stringify(global.__sent));
+  else out.push("edit-save:ok");
   console.log(out.join("  ")); console.log(errs.length ? "ERRORS: " + errs.join(" | ") : "SMOKE OK");
   process.exit(errs.length || out.some(x => x.includes("EMPTY")) ? 1 : 0);
 })().catch(e => { console.log("CRASH", e.stack.split("\n").slice(0, 4).join("\n")); process.exit(1); });

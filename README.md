@@ -43,3 +43,10 @@ To change an image: replace it in `design/` and run `python tools/build_assets.p
 * Keep Render and Supabase in the same region (EU), every request makes several database calls.
 * Lite mode (lightning button, automatic on phones and weak PCs) removes blur and animations.
 * When you edit `app.js`, `styles.css` or `assets.js`, change `?v=7` to `?v=8` in `index.html` (they are cached for a year).
+
+## Edit-phone fixes (v9)
+* The reason a save fails now stays visible inside the form (and the Save button shows "Saving…").
+* Backend errors come back as readable messages instead of "Failed to fetch" / "Request failed".
+* Enter only jumps to the next field inside IMEI / Serial fields (scanners); everywhere else Enter saves.
+* RAM / ROM selects now share the row evenly (RAM was squeezed to a few pixels).
+* Bump `?v=` in `index.html` whenever you change `app.js` / `styles.css` / `assets.js` (now `?v=8`).

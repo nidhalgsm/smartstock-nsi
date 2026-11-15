@@ -24,6 +24,9 @@ class T(unittest.TestCase):
     def test_blank_becomes_none(self):
         d = DeviceIn(category="parallele", imei1=VALID, serial_number="  ", color="")
         self.assertIsNone(d.serial_number); self.assertIsNone(d.color)
+    def test_serial_rejects_filter_characters(self):
+        with self.assertRaises(Exception): DeviceIn(category="parallele", serial_number="ab,id.neq.0")
+        DeviceIn(category="parallele", serial_number="INF-HOT40_99.A")
     def test_leading_zero_kept(self):
         self.assertEqual(DeviceIn(category="tunisien", serial_number="000123").serial_number, "000123")
 

@@ -86,7 +86,10 @@ def update_device(device_id: str, d: DeviceIn, user=Depends(current_user)):
     if d.is_repair:
         data["supplier_name"] = data["sajalni_status"] = None
     data["updated_at"] = now()
-    row = sb.table("devices").update(data).eq("id", device_id).execute().data[0]
+    rows = sb.table("devices").update(data).eq("id", device_id).execute().data
+    if not rows:
+        raise HTTPException(404, "Phone not found (nothing was updated)")
+    row = rows[0]
     audit(user, "device.update", "device", device_id, d.model or "")
     return row
 

@@ -159,25 +159,27 @@ async function saveSaj(id) { try { await api(`/devices/${id}/sajalni`, { method:
 // ---------- add / edit phone (with "Repaired phone" option) ----------
 function formHtml(d = {}) { const rep = !!d.is_repair, v = k => esc(d[k] ?? ""), opt = (a, sel) => a.map(x => `<option value="${x}" ${sel == x ? "selected" : ""}>${x} GB</option>`).join("");
   const fld = (k, ph, sc) => `<div class="row"><input id="${k}" placeholder="${ph}" value="${v(k)}" ${/imei/.test(k) ? 'inputmode="numeric"' : ""}>${sc ? `<button type="button" class="ico" onclick="scan('${k}')">{{camera}}</button>` : ""}</div>`;
-  return `<form class="grid2" onsubmit="saveForm(event,'${d.id || ""}')" onkeydown="if(event.target.tagName==='INPUT')scanEnter(event)">
+  return `<form class="grid2" onsubmit="saveForm(event,'${d.id || ""}')" onkeydown="if(/imei|serial/.test(event.target.id))scanEnter(event)">
   <label class="full chk"><input type="checkbox" id="is_repair" ${rep ? "checked" : ""} onchange="toggleRepair()"> Repaired phone (owner never collected it, it will be sold)</label>
   <div class="full" id="ownw" style="display:${rep ? "block" : "none"}"><input id="owner_name" placeholder="Owner name" value="${v("owner_name")}"></div>
   <small class="full mut" id="rh" style="display:none">IMEI 1, IMEI 2 and Serial Number are optional for repaired phones.</small>
   <select class="full" id="category"><option value="tunisien">Smartphone Tunisien</option><option value="parallele" ${d.category === "parallele" ? "selected" : ""}>Smartphone Parallèle</option></select>
   ${fld("imei1", "IMEI 1 (15 digits)", 1)}${fld("imei2", "IMEI 2 (optional)", 1)}<div class="full">${fld("serial_number", "Serial Number", 1)}</div>${fld("model", "Model")}${fld("supplier_name", "Supplier")}
   <div class="row"><div><input id="color" list="colors" placeholder="Color (pick or type)" value="${v("color")}"><datalist id="colors">${COLORS.map(c => `<option value="${c}">`).join("")}</datalist></div><input type="color" title="Pick any color" onchange="$('color').value=this.value"></div>
-  <div class="row"><select id="ram"><option value="">RAM</option>${opt([2, 3, 4, 6, 8, 12, 16], d.ram)}</select><select id="rom"><option value="">ROM</option>${opt([32, 64, 128, 256, 512], d.rom)}</select></div>
+  <div class="row eq"><select id="ram"><option value="">RAM</option>${opt([2, 3, 4, 6, 8, 12, 16], d.ram)}</select><select id="rom"><option value="">ROM</option>${opt([32, 64, 128, 256, 512], d.rom)}</select></div>
   <input id="purchase_price" type="number" step="0.001" placeholder="Purchase price TND" value="${v("purchase_price")}"><input id="expected_sale_price" type="number" step="0.001" placeholder="Expected sale TND" value="${v("expected_sale_price")}">
   <select class="full" id="sajalni_status"><option value="">Sajalni status: not checked</option>${Object.entries(SAJ).map(([k, x]) => `<option value="${k}" ${d.sajalni_status === k ? "selected" : ""}>${x}</option>`).join("")}</select>
-  <textarea class="full" id="notes" placeholder="Notes">${v("notes")}</textarea><button class="pill full">Save</button></form>`; }
+  <textarea class="full" id="notes" placeholder="Notes">${v("notes")}</textarea><button class="pill full">Save</button><div class="full" id="formerr"></div></form>`; }
 function toggleRepair() { const r = $("is_repair").checked; $("ownw").style.display = r ? "block" : "none"; $("rh").style.display = r ? "block" : "none";
   for (const id of ["supplier_name", "sajalni_status"]) { $(id).disabled = r; if (r) $(id).value = ""; } }
 function addPage() { $("v").innerHTML = `<div class="card" style="max-width:760px">${formHtml()}</div>`; toggleRepair(); }
-async function saveForm(e, id) { e.preventDefault(); const g = k => $(k).value, n = k => g(k) === "" ? null : +g(k), rep = $("is_repair").checked;
+async function saveForm(e, id) { e.preventDefault(); const g = k => $(k).value, n = k => g(k) === "" ? null : +g(k), rep = $("is_repair").checked,
+  btn = e.target && e.target.querySelector ? e.target.querySelector("button:not([type=button])") : null, err = $("formerr");
   const body = { is_repair: rep, owner_name: rep ? g("owner_name") : "", category: g("category"), imei1: g("imei1"), imei2: g("imei2"), serial_number: g("serial_number"), model: g("model"), color: g("color"),
     ram: n("ram"), rom: n("rom"), purchase_price: n("purchase_price"), expected_sale_price: n("expected_sale_price"), notes: g("notes"), supplier_name: rep ? null : g("supplier_name"), sajalni_status: rep ? null : (g("sajalni_status") || null) };
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; } if (err) err.innerHTML = "";
   try { await api(id ? "/devices/" + id : "/devices", { method: id ? "PATCH" : "POST", body: JSON.stringify(body) }); toast("Saved", true); closeModal(); if (id) load("stock"); else { L.stock.cat = rep ? "repaired" : ""; go("stock"); } }
-  catch (er) { toast(er.message); } }
+  catch (er) { if (btn) { btn.disabled = false; btn.textContent = "Save"; } if (err) err.innerHTML = `<div class="msg">${esc(er.message)}</div>`; toast(er.message); } }  // the reason stays visible inside the form
 
 // ---------- sell + receipt ----------
 let cur = null;
@@ -279,7 +281,7 @@ async function loadRepairs() { const p = new URLSearchParams({ page: RP.page, pa
     $("rpg").innerHTML = `<button class="pill g" ${RP.page <= 1 ? "disabled" : ""} onclick="RP.page--;loadRepairs()">{{arrow_left}}</button><span>Page ${RP.page} / ${pages} · ${r.total}</span><button class="pill g" ${RP.page >= pages ? "disabled" : ""} onclick="RP.page++;loadRepairs()">{{arrow_right}}</button>`;
   } catch (e) { toast(e.message); } }
 function repairForm(i) { const x = i === undefined ? { status: "received" } : ROWS.repairs[i], today = new Date().toISOString().slice(0, 10), d = s => s ? String(s).slice(0, 10) : "";
-  modal(`<h3>${x.id ? "Edit repair" : "New repair"}</h3><form class="grid2" onsubmit="saveRepair(event,'${x.id || ""}')" onkeydown="if(event.target.tagName==='INPUT')scanEnter(event)">
+  modal(`<h3>${x.id ? "Edit repair" : "New repair"}</h3><form class="grid2" onsubmit="saveRepair(event,'${x.id || ""}')" onkeydown="if(/imei|serial/.test(event.target.id))scanEnter(event)">
   <input id="r_owner" placeholder="Owner name" value="${esc(x.owner_name)}" required><input id="r_phone" placeholder="Owner phone (WhatsApp)" value="${esc(x.owner_phone)}" inputmode="tel">
   <input id="r_model" placeholder="Model" value="${esc(x.model)}"><div><input id="r_color" list="colors" placeholder="Color" value="${esc(x.color)}"><datalist id="colors">${COLORS.map(c => `<option value="${c}">`).join("")}</datalist></div>
   <div class="full row"><input id="r_imei" placeholder="IMEI (optional)" value="${esc(x.imei1)}" inputmode="numeric"><button type="button" class="ico" onclick="scan('r_imei')">{{camera}}</button></div>
@@ -335,7 +337,7 @@ try { fetch(API.replace(/\/api\/v1\/?$/, "") + "/health", { mode: "no-cors" }).c
 const _C = new Map();   // GET cache (20 s), cleared by every write: going back and forth between pages is instant
 async function api(path, opts = {}) { const get = !opts.method || opts.method === "GET";
   if (get) { const c = _C.get(path); if (c && Date.now() - c.t < 20000) return c.v; } else _C.clear();
-  const v = await apiRaw(path, opts); if (get) _C.set(path, { t: Date.now(), v }); return v; }
+  try { const v = await apiRaw(path, opts); if (get) _C.set(path, { t: Date.now(), v }); return v; } finally { if (!get) _C.clear(); } }   // a write also empties the cache AFTER it finishes
 function renderPage() { ({ dash, stock: () => list("stock"), sold: () => list("sold"), add: addPage, sell: () => sellPage(arg), tasjil: tasjilPage, tools: toolsPage, repairs: repairsPage, warranty: warrantyPage })[page](); }
 // big libraries are loaded only when needed (and in idle time), not at startup
 const ZX_URL = "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js", QR_URL = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
