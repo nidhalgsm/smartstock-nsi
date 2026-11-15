@@ -1,4 +1,5 @@
 import calendar
+import time
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Literal, Optional
@@ -89,8 +90,7 @@ def history(device_id: str, user=Depends(current_user)):
     return sorted(ev, key=lambda e: e["at"], reverse=True)
 
 
-@router.get("/alerts")
-def alerts(days: int = 30, user=Depends(current_user)):
+def _alerts_compute(days: int):
     cut = now() - timedelta(days=days)
     devs = fetch_all(lambda: sb.table("devices").select("id,model,category,imei1,imei2,serial_number,purchase_date,sajalni_status")
                      .eq("status", "in_stock").is_("deleted_at", "null").order("id"))
@@ -123,7 +123,7 @@ def alerts(days: int = 30, user=Depends(current_user)):
 @router.get("/warranty/{code}")
 def warranty(code: str, user=Depends(current_user)):
     """Warranty lookup by IMEI / serial: returns the sold phone with its latest sale."""
-    if not re.fullmatch(r"[A-Za-z0-9]{4,40}", code):
+    if not re.fullmatch(r"[A-Za-z0-9._-]{4,40}", code):
         raise HTTPException(400, "Invalid code")
     rows = sb.table("devices").select("*, sales!inner(*)").is_("deleted_at", "null").or_(
         f"imei1.eq.{code},imei2.eq.{code},serial_number.eq.{code}").execute().data
@@ -135,8 +135,27 @@ def warranty(code: str, user=Depends(current_user)):
     return d
 
 
+_ALERTS = {}
+
+
+@router.get("/alerts")
+def alerts(days: int = 30, user=Depends(current_user)):
+    hit = _ALERTS.get(days)  # heavy computation: reuse it for 60 seconds
+    if hit and time.time() - hit[0] < 60:
+        return hit[1]
+    data = _alerts_compute(days)
+    _ALERTS[days] = (time.time(), data)
+    return data
+
+
 @router.get("/tasjil/last")
 def tasjil_last(user=Depends(current_user)):
+    try:
+        data = sb.rpc("tasjil_last", {}).execute().data
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        pass  # migration 007 not run yet: slower fallback below
     out = {}
     for c in fetch_all(lambda: sb.table("tasjil_checks").select("device_id,checked_at,result_status").order("checked_at", desc=True).order("id")):
         out.setdefault(c["device_id"], {**c, "n": 0})["n"] += 1

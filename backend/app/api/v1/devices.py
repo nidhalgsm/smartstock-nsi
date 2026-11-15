@@ -10,12 +10,13 @@ now = lambda: datetime.now(timezone.utc).isoformat()
 
 
 def _find_duplicate(d: DeviceIn, exclude_id=None):
-    for val in (d.imei1, d.imei2, d.serial_number):
-        if val:
-            hits = sb.table("devices").select("id").is_("deleted_at", "null").or_(
-                f"imei1.eq.{val},imei2.eq.{val},serial_number.eq.{val}").execute().data
-            if any(h["id"] != exclude_id for h in hits):
-                return val
+    vals = [v for v in (d.imei1, d.imei2, d.serial_number) if v]
+    if not vals:
+        return None
+    cond = ",".join(f"imei1.eq.{v},imei2.eq.{v},serial_number.eq.{v}" for v in vals)
+    for h in sb.table("devices").select("id,imei1,imei2,serial_number").is_("deleted_at", "null").or_(cond).execute().data:
+        if h["id"] != exclude_id:
+            return next((v for v in vals if v in (h["imei1"], h["imei2"], h["serial_number"])), vals[0])
     return None
 
 
@@ -61,7 +62,7 @@ def list_devices(status: Optional[str] = None, category: Optional[str] = None, q
 
 @router.get("/lookup/{code}")
 def lookup(code: str, user=Depends(current_user)):
-    if not re.fullmatch(r"[A-Za-z0-9]{4,40}", code):
+    if not re.fullmatch(r"[A-Za-z0-9._-]{4,40}", code):
         raise HTTPException(400, "Invalid code")
     rows = sb.table("devices").select("*").is_("deleted_at", "null").or_(
         f"imei1.eq.{code},imei2.eq.{code},serial_number.eq.{code}").execute().data

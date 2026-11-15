@@ -33,6 +33,7 @@ const ICONS = {
   x: `<path d="m6 6 12 12M18 6 6 18"/>`,
   arrow_left: `<path d="M19 12H5m6-6-6 6 6 6"/>`,
   arrow_right: `<path d="M5 12h14m-6-6 6 6-6 6"/>`,
+  zap: `<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>`,
   bell: `<path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7M10 20h4"/>`,
   message: `<path d="M4 5h16v11H9l-5 4z"/>`,
   award: `<circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 7 5-3 5 3-1.5-7"/>`,
@@ -55,7 +56,7 @@ function toast(m, ok) { const e = document.createElement("div"); e.className = "
 const modal = h => { closeModal(); const m = document.createElement("div"); m.id = "modal"; m.className = "ov"; m.onclick = e => e.target === m && closeModal(); m.innerHTML = `<div class="box">${h}</div>`; document.body.appendChild(m); };
 const closeModal = () => { const m = $("modal"); if (m) m.remove(); };
 // session is refreshed automatically: no forced logout, several devices at once
-async function api(path, opts = {}) {
+async function apiRaw(path, opts = {}) {
   const call = async () => { const { data } = await sb.auth.getSession(); if (!data.session) throw new Error("Session ended");
     return fetch(API + path, { ...opts, headers: { "Content-Type": "application/json", Authorization: "Bearer " + data.session.access_token } }); };
   let r = await call();
@@ -80,8 +81,7 @@ async function scan(id, then) { stopScan(); const o = document.createElement("di
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } });
       const v = $("vid"); v.srcObject = stream; await v.play(); scanning = true;
       while (scanning) { const r = await det.detect(v).catch(() => []); if (r.length) return done(r[0].rawValue); await new Promise(r => setTimeout(r, 150)); }
-    } else if (window.ZXing) { zx = new ZXing.BrowserMultiFormatReader(); await zx.decodeFromVideoDevice(undefined, "vid", r => { if (r) done(r.getText()); }); }
-    else throw new Error("scanner library not loaded");
+    } else { await lib("scanner library", ZX_URL, () => window.ZXing); zx = new ZXing.BrowserMultiFormatReader(); await zx.decodeFromVideoDevice(undefined, "vid", r => { if (r) done(r.getText()); }); }
   } catch (e) { stopScan(); toast("Camera scan failed: " + (e.message || "allow camera access") + ". Type the code or use a USB scanner."); } }
 // a USB/Bluetooth scanner types the code then presses Enter: go to the next field instead of submitting the form
 function scanEnter(e) { if (e.key !== "Enter") return; e.preventDefault(); const f = e.target.closest("form"), els = [...f.querySelectorAll("input:not([type=checkbox]):not([type=color]):not(:disabled),select:not(:disabled),textarea")], i = els.indexOf(e.target); if (els[i + 1]) els[i + 1].focus(); }
@@ -106,13 +106,13 @@ async function doLogin(e) { e.preventDefault(); const { error } = await sb.auth.
 
 // ---------- shell ----------
 const NAV = [["dash", "{{dash}}", "Dashboard"], ["stock", "{{box}}", "Stock"], ["add", "{{plus}}", "Add phone"], ["sell", "{{banknote}}", "Sell"], ["sold", "{{receipt}}", "Sold phones"], ["tasjil", "{{shield}}", "Tasjil Sajalni"], ["tools", "{{toolbox}}", "Tools"], ["repairs", "{{wrench}}", "Repairs"], ["warranty", "{{award}}", "Warranty"]];
-const go = (p, a = null) => { page = p; arg = a; shell(); };
+const go = (p, a = null) => { page = p; arg = a; if (!document.querySelector(".rail") || !$("v")) return shell(); document.querySelectorAll(".rail button").forEach(b => b.classList.toggle("on", b.dataset.k === p)); $("ttl").textContent = tx(NAV.find(n => n[0] === p)[2]); renderPage(); window.scrollTo(0, 0); };
 function shell() {
-  $("app").innerHTML = `<div class="app"><aside class="rail"><div class="logo"><img class="mark" src="${ASSETS.favicon}" alt="">SmartStock</div>${NAV.map(([k, e, l]) => `<button class="${k === page ? "on" : ""}" onclick="go('${k}')"><span>${e}</span><em>${l}</em></button>`).join("")}</aside>
-  <main><div class="top"><h1>${NAV.find(n => n[0] === page)[2]}</h1><button class="ico" onclick="quick()">{{search}} Search <kbd>Ctrl K</kbd></button>
-  <button class="ico bell" title="Notifications" onclick="bellOpen()">{{bell}}<i id="bellN" class="dotn"></i></button><input type="color" id="acc" title="Accent colour" oninput="setAccent(this.value)" value="${ACC}" style="width:38px;height:38px;padding:2px;margin:0"><button class="ico" onclick="toggleLang()">${LANG === "fr" ? "EN" : "FR"}</button><button class="ico" onclick="toggleTheme()">{{contrast}}</button><button class="pill g" onclick="sb.auth.signOut()">Sign out</button></div><div id="v"></div></main></div>`;
-  updateBell(); if (!window.BELL || Date.now() - window.bellAt > 60000) loadBell();
-  ({ dash, stock: () => list("stock"), sold: () => list("sold"), add: addPage, sell: () => sellPage(arg), tasjil: tasjilPage, tools: toolsPage, repairs: repairsPage, warranty: warrantyPage })[page]();
+  $("app").innerHTML = `<div class="app"><aside class="rail"><div class="logo"><img class="mark" src="${ASSETS.favicon}" alt="">SmartStock</div>${NAV.map(([k, e, l]) => `<button class="${k === page ? "on" : ""}" data-k="${k}" onclick="go('${k}')"><span>${e}</span><em>${l}</em></button>`).join("")}</aside>
+  <main><div class="top"><h1 id="ttl">${NAV.find(n => n[0] === page)[2]}</h1><button class="ico" onclick="quick()">{{search}} Search <kbd>Ctrl K</kbd></button>
+  <button class="ico bell" title="Notifications" onclick="bellOpen()">{{bell}}<i id="bellN" class="dotn"></i></button><button class="ico" title="Lite mode (faster)" onclick="toggleLite()">{{zap}}</button><input type="color" id="acc" title="Accent colour" oninput="setAccent(this.value)" value="${ACC}" style="width:38px;height:38px;padding:2px;margin:0"><button class="ico" onclick="toggleLang()">${LANG === "fr" ? "EN" : "FR"}</button><button class="ico" onclick="toggleTheme()">{{contrast}}</button><button class="pill g" onclick="sb.auth.signOut()">Sign out</button></div><div id="v"></div></main></div>`;
+  updateBell(); if (!window.BELL || Date.now() - window.bellAt > 300000) setTimeout(loadBell, 3000);
+  renderPage();
 }
 function countUp() { document.querySelectorAll("[data-n]").forEach(el => { const n = +el.dataset.n, t0 = performance.now(), f = t => { const p = Math.min(1, (t - t0) / 900); el.textContent = Math.round(n * (1 - (1 - p) ** 3)).toLocaleString("fr-FR"); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }); }
 
@@ -123,7 +123,7 @@ async function dash() { $("v").innerHTML = '<div class="bento"><div class="card 
     <div class="mini"><div><small>Revenue</small><b data-n="${s.revenue_tnd}">0</b></div><div><small>Margin</small><b class="up">+<span data-n="${s.gross_margin_tnd}">0</span></b></div><div><small>Sold</small><b>${s.sold}</b></div></div>
     <div class="acts"><button class="pill" onclick="go('add')">{{plus}} Add phone</button><button class="pill w" onclick="go('sell')">{{banknote}} Scan to sell</button></div><div class="orb"></div></div>
     <div class="card"><h3>Stock split</h3><div class="ring" style="--p:${Math.round(s.tunisien / tot * 100)}%"><div><b>${s.in_stock}</b><small>In stock</small></div></div><div class="leg"><span><i class="d1"></i>Tunisien ${s.tunisien}</span><span><i class="d2"></i>Parallèle ${s.parallele}</span></div></div>
-    <div class="card span2"><h3>{{receipt}} Latest sales</h3><div class="scroll"><table class="tbl"><tbody>${sl.items.map((d, i) => `<tr style="animation-delay:${i * 60}ms"><td><b>${esc(d.model || "—")}</b><br><small>${esc(d.imei1 || "")}</small></td><td>${esc((d.sale || {}).client_name || "—")}</td><td class="pr"><b>${fmt((d.sale || {}).sale_price)}</b></td></tr>`).join("") || "<tr><td class='mut'>—</td></tr>"}</tbody></table></div></div>
+    <div class="card span2"><h3>{{receipt}} Latest sales</h3><div class="scroll"><table class="tbl"><tbody>${sl.items.map((d, i) => `<tr><td><b>${esc(d.model || "—")}</b><br><small>${esc(d.imei1 || "")}</small></td><td>${esc((d.sale || {}).client_name || "—")}</td><td class="pr"><b>${fmt((d.sale || {}).sale_price)}</b></td></tr>`).join("") || "<tr><td class='mut'>—</td></tr>"}</tbody></table></div></div>
     <div class="card"><h3>{{shield}} Sajalni</h3><div class="big" style="color:var(--${s.blocked_in_stock ? "bad" : "ok"})">${s.blocked_in_stock}</div><small class="mut">phones blocked in stock</small><br><button class="pill g" style="margin-top:10px" onclick="go('tasjil')">Review</button></div></div>`; countUp();
   } catch (e) { toast(e.message); } }
 
@@ -148,7 +148,7 @@ function row(x, i, kind) { const s = x.sale || {}, rep = !!x.is_repair, sold = k
   const c5 = sold ? `<b class="pr">${fmt(s.sale_price)}</b><br><small>Margin: ${s.sale_price != null && x.purchase_price != null ? fmt(s.sale_price - x.purchase_price) : "—"}</small>` : `<b class="pr">${fmt(x.expected_sale_price)}</b><br><small>Buy: ${fmt(x.purchase_price)}</small>`;
   const acts = sold ? `<button class="pill w" title="Receipt" onclick="receipt(${i})">{{receipt}}</button><button class="ico" title="Edit Sajalni status" onclick="editSaj(${i})">{{shield}}</button><button class="ico" title="History" onclick="hist('${x.id}')">{{clock}}</button><button class="ico" title="Return / defective" onclick="statusForm('${x.id}')">{{undo}}</button>`
     : `${`<button class="pill w" title="Sell" onclick="go('sell','${esc(x.imei1 || x.serial_number || "")}')">{{banknote}}</button>`}<button class="ico" onclick="readDev(${i})">{{eye}}</button><button class="ico" onclick="editDev(${i})">{{pencil}}</button><button class="ico" title="History" onclick="hist('${x.id}')">{{clock}}</button><button class="ico" title="Status" onclick="statusForm('${x.id}')">{{sliders}}</button><button class="ico" onclick="delDev(${i})">{{trash}}</button>`;
-  return `<tr style="animation-delay:${i * 40}ms"><td>${c1}</td><td><code>${esc(x.imei1 || "—")}</code><br><small>S/N ${esc(x.serial_number || "—")}</small></td><td><b class="t-${x.category}">${CAT[x.category]}</b><br><small>${rep ? "{{wrench}} Repaired" : esc(x.supplier_name || "—")}</small></td><td>${rep ? "<small>—</small>" : badge(x.sajalni_status)}</td><td>${c5}</td><td><div class="acts">${acts}</div></td></tr>`; }
+  return `<tr><td>${c1}</td><td><code>${esc(x.imei1 || "—")}</code><br><small>S/N ${esc(x.serial_number || "—")}</small></td><td><b class="t-${x.category}">${CAT[x.category]}</b><br><small>${rep ? "{{wrench}} Repaired" : esc(x.supplier_name || "—")}</small></td><td>${rep ? "<small>—</small>" : badge(x.sajalni_status)}</td><td>${c5}</td><td><div class="acts">${acts}</div></td></tr>`; }
 const readDev = i => { const x = ROWS.stock[i]; modal(`<h3>${esc(x.model || "—")}</h3><dl>${[["Owner", x.owner_name], ["Color", x.color], ["RAM / ROM", (x.ram || "—") + " / " + (x.rom || "—") + " GB"], ["IMEI 2", x.imei2], ["S/N", x.serial_number], ["Supplier", x.supplier_name], ["Purchase", fmt(x.purchase_price)], ["Expected", fmt(x.expected_sale_price)], ["Sajalni", SAJ[x.sajalni_status]], ["Notes", x.notes]].filter(([k, v]) => k !== "Owner" || v).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v || "—")}</dd>`).join("")}</dl><button class="pill g" onclick="closeModal()">Close</button>`); };
 const editDev = i => { modal(`<h3>Edit phone</h3>${formHtml(ROWS.stock[i])}`); toggleRepair(); };
 async function delDev(i) { const x = ROWS.stock[i]; if (!confirm(`Delete "${x.model || x.imei1 || "this phone"}"?`)) return; try { await api("/devices/" + x.id, { method: "DELETE" }); load("stock"); } catch (e) { toast(e.message); } }
@@ -199,7 +199,7 @@ function printDoc(title, body, wait = 700) { const w = window.open("", "_blank")
 const addM = (d, m) => { const x = new Date(d); x.setMonth(x.getMonth() + m); return x; }, wdate = d => d.toLocaleDateString("fr-FR", { timeZone: "Africa/Tunis" });
 const qrImg = t => { if (typeof qrcode === "undefined") return ""; const q = qrcode(0, "M"); q.addData(t); q.make(); return q.createDataURL(4); };
 function warranty(s) { const sd = new Date(s.sale_date), end = addM(sd, 12), bat = addM(sd, 3), now = new Date(); return { end, bat, phoneOk: end > now, batOk: bat > now, dPhone: Math.ceil((end - now) / 864e5), dBat: Math.ceil((bat - now) / 864e5) }; }
-function receipt(i) { const d = ROWS.sold[i], s = d.sale || {}, w = warranty(s), r = (k, v) => `<tr><th>${k}</th><td>${esc(v)}</td></tr>`,
+async function receipt(i) { try { await lib("QR code", QR_URL, () => typeof qrcode !== "undefined"); } catch {} const d = ROWS.sold[i], s = d.sale || {}, w = warranty(s), r = (k, v) => `<tr><th>${k}</th><td>${esc(v)}</td></tr>`,
   qr = qrImg(`NSI|IMEI:${d.imei1 || ""}|SN:${d.serial_number || ""}|SOLD:${String(s.sale_date).slice(0, 10)}|PHONE-WARRANTY:${wdate(w.end)}|BATTERY-WARRANTY:${wdate(w.bat)}`);
   printDoc("Receipt", `${NSI()}<h2 style="text-align:center;margin:0 0 4px">Receipt / Warranty</h2><p style="text-align:center">Date: ${fdate(s.sale_date)}</p>
   <table>${r("Client", s.client_name)}${r("Model", d.model)}${r("Color", d.color)}${r("RAM / ROM", (d.ram || "—") + " / " + (d.rom || "—") + " GB")}${r("IMEI 1", d.imei1)}${r("IMEI 2", d.imei2)}${r("Serial Number", d.serial_number)}
@@ -271,7 +271,7 @@ async function loadRepairs() { const p = new URLSearchParams({ page: RP.page, pa
   try { const [r, c] = await Promise.all([api("/repairs?" + p), api("/repairs/counts")]), pages = Math.max(1, Math.ceil(r.total / 10)); if (RP.page > pages) { RP.page = pages; return loadRepairs(); }
     ROWS.repairs = r.items;
     $("rchips").innerHTML = [["", "All"], ...Object.entries(RS)].map(([k, l]) => `<button class="pill ${RP.status === k ? "on" : "g"}" onclick="RP.status='${k}';RP.page=1;loadRepairs()">${l} ${k ? c[k] || 0 : c.all || 0}</button>`).join("");
-    $("rb").innerHTML = r.items.map((x, i) => `<tr style="animation-delay:${i * 40}ms"><td><b>${esc(x.owner_name)}</b><br><small>${esc(x.owner_phone || "—")}</small></td><td><b>${esc(x.model || "—")}</b><br><small>${esc(x.color || "")}${x.imei1 ? " · " + esc(x.imei1) : ""}</small></td><td>${esc(x.issue || "—")}</td>
+    $("rb").innerHTML = r.items.map((x, i) => `<tr><td><b>${esc(x.owner_name)}</b><br><small>${esc(x.owner_phone || "—")}</small></td><td><b>${esc(x.model || "—")}</b><br><small>${esc(x.color || "")}${x.imei1 ? " · " + esc(x.imei1) : ""}</small></td><td>${esc(x.issue || "—")}</td>
       <td><b class="pr">${fmt(x.price)}</b></td><td><small>In: ${dshort(x.received_at)}<br>Out: ${dshort(x.delivered_at)}</small></td><td><span class="b rb-${x.status}">${RS[x.status] || x.status}</span></td>
       <td><div class="acts">${RNEXT[x.status] ? `<button class="pill w" title="Next step" onclick="repairNext('${x.id}','${RNEXT[x.status]}')">{{arrow_right}} ${RS[RNEXT[x.status]]}</button>` : ""}<button class="ico" title="Edit" onclick="repairForm(${i})">{{pencil}}</button>
       <button class="ico" title="Receipt" onclick="repairReceipt(${i})">{{receipt}}</button><button class="ico" title="WhatsApp" onclick="repairWa(${i})">{{message}}</button><button class="ico" title="Delete" onclick="repairDel('${x.id}')">{{trash}}</button></div></td></tr>`).join("")
@@ -328,5 +328,23 @@ function quickOpen(code, status) { const k = status === "sold" ? "sold" : "stock
 document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); if (authed) quick(); } });
 Object.assign(FR, { "Repairs": "Réparations", "Warranty": "Garantie", "New repair": "Nouvelle réparation", "Owner": "Propriétaire", "Repair": "Réparation", "Dates": "Dates", "Status": "Statut", "Received": "Reçu", "In repair": "En réparation", "Ready": "Prêt", "Delivered": "Livré",
   "Check warranty": "Vérifier la garantie", "Notifications": "Notifications", "Search": "Rechercher", "Cancel": "Annuler", "Nothing here yet": "Rien pour le moment", "No repairs here": "Aucune réparation" });
+
+
+// ---------- v8: speed ----------
+try { fetch(API.replace(/\/api\/v1\/?$/, "") + "/health", { mode: "no-cors" }).catch(() => {}); } catch {}   // wake the free server while you type your password
+const _C = new Map();   // GET cache (20 s), cleared by every write: going back and forth between pages is instant
+async function api(path, opts = {}) { const get = !opts.method || opts.method === "GET";
+  if (get) { const c = _C.get(path); if (c && Date.now() - c.t < 20000) return c.v; } else _C.clear();
+  const v = await apiRaw(path, opts); if (get) _C.set(path, { t: Date.now(), v }); return v; }
+function renderPage() { ({ dash, stock: () => list("stock"), sold: () => list("sold"), add: addPage, sell: () => sellPage(arg), tasjil: tasjilPage, tools: toolsPage, repairs: repairsPage, warranty: warrantyPage })[page](); }
+// big libraries are loaded only when needed (and in idle time), not at startup
+const ZX_URL = "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js", QR_URL = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
+const lib = (name, url, ready) => ready() ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement("script"); s.src = url; s.onload = ok; s.onerror = () => no(new Error("could not load " + name)); document.head.appendChild(s); });
+const idle = f => ("requestIdleCallback" in window ? requestIdleCallback(f, { timeout: 4000 }) : setTimeout(f, 2500));
+idle(() => { lib("QR code", QR_URL, () => typeof qrcode !== "undefined").catch(() => {}); if (!("BarcodeDetector" in window)) lib("scanner", ZX_URL, () => window.ZXing).catch(() => {}); });
+// Lite mode: no blur / animations. On by default for phones and weak computers; switch it with the lightning button.
+let LITE = localStorage.getItem("lite"); LITE = LITE === null ? ((window.innerWidth || 1000) <= 900 || (navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4) : LITE === "1";
+const applyLite = () => document.documentElement.classList.toggle("lite", LITE); applyLite();
+function toggleLite() { LITE = !LITE; try { localStorage.setItem("lite", LITE ? "1" : "0"); } catch {} applyLite(); toast(LITE ? "Lite mode ON (faster)" : "Lite mode OFF (full effects)", true); }
 
 boot();

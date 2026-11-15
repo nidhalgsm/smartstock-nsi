@@ -70,3 +70,15 @@ kbd{font:600 .65rem sans-serif;border:1px solid var(--line);border-radius:6px;pa
 .rail:hover{width:100%}.logo{display:none}.rail button{flex-direction:column;gap:2px;padding:8px 10px;min-width:60px;margin:0;font-size:.62rem;text-align:center}.rail em{opacity:1;font-size:.62rem}.rail button.on{box-shadow:none}
 main{padding:0 12px calc(92px + env(safe-area-inset-bottom))}.top{margin:0 -12px 10px;padding-top:calc(10px + env(safe-area-inset-top));flex-wrap:wrap}kbd{display:none}.card:hover{border-color:var(--line)}}
 @media(max-width:700px){.tbl,.tbl tbody{display:block}.tbl thead{display:none}.tbl tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;padding:12px;margin:10px 0;background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:16px;border:1px solid var(--line)}.tbl td{border:0;padding:0}.tbl td:last-child{grid-column:1/-1}.tbl tbody tr:hover{background:none}}
+/* ---- v8 performance: no live blur on big areas, short animations, no layout thrash ---- */
+body::before{filter:none;transform:none;background:linear-gradient(rgba(10,10,12,.58),rgba(10,10,12,.58)),var(--bg-img) center/cover no-repeat}
+[data-theme=light] body::before{background:linear-gradient(rgba(240,238,235,.74),rgba(240,238,235,.74)),var(--bg-img) center/cover no-repeat}
+.card,.found,.imei{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:color-mix(in srgb,var(--panel) 87%,transparent)!important;transition:border-color .15s}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+main,.card,.dev,.stat,.msg,.hero,.alert,.tbl tbody tr{animation-duration:.18s!important}
+.tbl tbody tr,.pill,.ico,.rail button{transition:background-color .12s,border-color .12s,opacity .12s}.card:hover{border-color:var(--line)}
+.orb,.float,.phone{will-change:transform}.orb::after{animation:none}.ring{animation-duration:.6s}.rail{transition:width .15s}
+@media(min-width:901px){.app{display:block}.rail{position:fixed;top:0;left:0;bottom:0;height:100vh;width:64px;z-index:30}.rail:hover{width:216px}main{margin-left:64px}}
+@media(max-width:900px){main{margin-left:0}}
+.lite *,.lite *::before,.lite *::after{animation:none!important;transition:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.lite body::before{display:none}.lite .card,.lite .rail,.lite .top,.lite .box,.lite .found,.lite .imei{background:var(--panel)!important}.lite .orb{box-shadow:none}

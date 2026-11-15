@@ -43,6 +43,13 @@ class DeviceIn(BaseModel):
             raise ValueError("IMEI must be 15 digits with a valid check digit")
         return v
 
+    @field_validator("serial_number")
+    @classmethod
+    def serial_format(cls, v):  # also keeps the value safe inside database filters
+        if v is not None and not re.fullmatch(r"[A-Za-z0-9._-]{1,40}", v):
+            raise ValueError("Serial Number: letters, digits and . _ - only (max 40)")
+        return v
+
     @model_validator(mode="after")
     def need_identifier(self):
         if not self.is_repair and not self.imei1 and not self.serial_number:

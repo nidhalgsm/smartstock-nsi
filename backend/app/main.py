@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from .core import settings
 from .api.v1 import devices, sales, dashboard, extras, repairs
 
 app = FastAPI(title="SmartStock TN API")
+app.add_middleware(GZipMiddleware, minimum_size=800)
 app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
                    allow_methods=["*"], allow_headers=["*"])
 for r in (devices.router, sales.router, dashboard.router, extras.router, repairs.router):

@@ -1,4 +1,6 @@
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import Header, HTTPException
 from pydantic_settings import BaseSettings
 from supabase import create_client
@@ -15,21 +17,38 @@ settings = Settings()
 sb = create_client(settings.supabase_url, settings.supabase_service_key)
 
 
+_USERS = {}  # token -> (expires_at, user): Supabase verified it, we trust it for 2 minutes
+_POOL = ThreadPoolExecutor(max_workers=2)
+
+
 def current_user(authorization: str = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Not authenticated")
+    token = authorization[7:]
+    hit = _USERS.get(token)
+    if hit and hit[0] > time.time():
+        return hit[1]
     try:
-        res = sb.auth.get_user(authorization[7:])
+        res = sb.auth.get_user(token)
         if not res or not res.user:
             raise ValueError
     except Exception:
         raise HTTPException(401, "Invalid or expired session")
+    if len(_USERS) > 200:
+        _USERS.clear()
+    _USERS[token] = (time.time() + 120, res.user)
     return res.user
 
 
 def audit(user, action, entity_type, entity_id, summary=""):
-    sb.table("audit_log").insert({"user_id": user.id, "action": action, "entity_type": entity_type,
-                                  "entity_id": str(entity_id), "summary": summary}).execute()
+    row = {"user_id": user.id, "action": action, "entity_type": entity_type, "entity_id": str(entity_id), "summary": summary}
+
+    def run():  # written in the background: the user does not wait for it
+        try:
+            sb.table("audit_log").insert(row).execute()
+        except Exception:
+            pass
+    _POOL.submit(run)
 
 
 def apply_search(qry, q):
