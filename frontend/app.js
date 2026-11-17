@@ -110,8 +110,9 @@ const go = (p, a = null) => { page = p; arg = a; if (!document.querySelector(".r
 function shell() {
   $("app").innerHTML = `<div class="app"><aside class="rail"><div class="logo"><img class="mark" src="${ASSETS.favicon}" alt="">SmartStock</div>${NAV.map(([k, e, l]) => `<button class="${k === page ? "on" : ""}" data-k="${k}" onclick="go('${k}')"><span>${e}</span><em>${l}</em></button>`).join("")}</aside>
   <main><div class="top"><h1 id="ttl">${NAV.find(n => n[0] === page)[2]}</h1><button class="ico" onclick="quick()">{{search}} Search <kbd>Ctrl K</kbd></button>
-  <button class="ico bell" title="Notifications" onclick="bellOpen()">{{bell}}<i id="bellN" class="dotn"></i></button><button class="ico" title="Lite mode (faster)" onclick="toggleLite()">{{zap}}</button><input type="color" id="acc" title="Accent colour" oninput="setAccent(this.value)" value="${ACC}" style="width:38px;height:38px;padding:2px;margin:0"><button class="ico" onclick="toggleLang()">${LANG === "fr" ? "EN" : "FR"}</button><button class="ico" onclick="toggleTheme()">{{contrast}}</button><button class="pill g" onclick="sb.auth.signOut()">Sign out</button></div><div id="v"></div></main></div>`;
+  <button class="ico bell" title="Notifications" onclick="bellOpen()">{{bell}}<i id="bellN" class="dotn"></i></button><button class="ico" title="Lite mode (faster)" onclick="toggleLite()">{{zap}}</button><input type="color" id="acc" title="Accent colour" oninput="setAccent(this.value)" value="${ACC}" style="width:38px;height:38px;padding:2px;margin:0"><button class="ico" onclick="toggleLang()">${LANG === "fr" ? "EN" : "FR"}</button><button class="ico" onclick="toggleTheme()">{{contrast}}</button><button class="pill g" onclick="sb.auth.signOut()">Sign out</button></div><div id="sysbar"></div><div id="v"></div></main></div>`;
   updateBell(); if (!window.BELL || Date.now() - window.bellAt > 300000) setTimeout(loadBell, 3000);
+  if ($("sysbar")) $("sysbar").innerHTML = window.SYS || ""; if (window.SYS === undefined) { window.SYS = ""; setTimeout(checkSystem, 1500); }
   renderPage();
 }
 function countUp() { document.querySelectorAll("[data-n]").forEach(el => { const n = +el.dataset.n, t0 = performance.now(), f = t => { const p = Math.min(1, (t - t0) / 900); el.textContent = Math.round(n * (1 - (1 - p) ** 3)).toLocaleString("fr-FR"); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }); }
@@ -178,7 +179,10 @@ async function saveForm(e, id) { e.preventDefault(); const g = k => $(k).value, 
   const body = { is_repair: rep, owner_name: rep ? g("owner_name") : "", category: g("category"), imei1: g("imei1"), imei2: g("imei2"), serial_number: g("serial_number"), model: g("model"), color: g("color"),
     ram: n("ram"), rom: n("rom"), purchase_price: n("purchase_price"), expected_sale_price: n("expected_sale_price"), notes: g("notes"), supplier_name: rep ? null : g("supplier_name"), sajalni_status: rep ? null : (g("sajalni_status") || null) };
   if (btn) { btn.disabled = true; btn.textContent = "Saving…"; } if (err) err.innerHTML = "";
-  try { await api(id ? "/devices/" + id : "/devices", { method: id ? "PATCH" : "POST", body: JSON.stringify(body) }); toast("Saved", true); closeModal(); if (id) load("stock"); else { L.stock.cat = rep ? "repaired" : ""; go("stock"); } }
+  try { const r = await api(id ? "/devices/" + id : "/devices", { method: id ? "PATCH" : "POST", body: JSON.stringify(body) });
+    const bad = id && r && r.id ? ["category", "imei1", "imei2", "serial_number", "model", "color", "ram", "rom", "purchase_price", "expected_sale_price", "notes"].concat(rep ? [] : ["supplier_name", "sajalni_status"]).filter(k => !sameVal(body[k], r[k])) : [];
+    if (bad.length) throw new Error("The server answered OK but did not store: " + bad.join(", ") + ". Run the database migrations (see the red banner) and reload.");
+    toast("Saved", true); closeModal(); if (id) load("stock"); else { L.stock.cat = rep ? "repaired" : ""; go("stock"); } }
   catch (er) { if (btn) { btn.disabled = false; btn.textContent = "Save"; } if (err) err.innerHTML = `<div class="msg">${esc(er.message)}</div>`; toast(er.message); } }  // the reason stays visible inside the form
 
 // ---------- sell + receipt ----------
@@ -348,5 +352,12 @@ idle(() => { lib("QR code", QR_URL, () => typeof qrcode !== "undefined").catch((
 let LITE = localStorage.getItem("lite"); LITE = LITE === null ? ((window.innerWidth || 1000) <= 900 || (navigator.deviceMemory || 8) <= 4 || (navigator.hardwareConcurrency || 8) <= 4) : LITE === "1";
 const applyLite = () => document.documentElement.classList.toggle("lite", LITE); applyLite();
 function toggleLite() { LITE = !LITE; try { localStorage.setItem("lite", LITE ? "1" : "0"); } catch {} applyLite(); toast(LITE ? "Lite mode ON (faster)" : "Lite mode OFF (full effects)", true); }
+
+
+// ---------- v10: save verification + database check ----------
+const sameVal = (a, b) => { const x = a ?? "", y = b ?? ""; return String(x).trim() === String(y).trim() || (x !== "" && y !== "" && Number(x) === Number(y)); };
+async function checkSystem() { try { const r = await api("/system/check"); if (!r || !r.missing || !r.missing.length) return;
+  window.SYS = `<div class="alert"><span><b>The database needs an update.</b> In Supabase, open SQL Editor and run migration${r.migrations_to_run.length > 1 ? "s" : ""} <b>${r.migrations_to_run.join(", ")}</b> (files in <code>database/migrations</code>), then reload. Missing: ${r.missing.map(m => esc(m.table + "." + m.column)).join(", ")}</span></div>`;
+  if ($("sysbar")) $("sysbar").innerHTML = window.SYS; } catch {} }
 
 boot();

@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from .core import settings
-from .api.v1 import devices, sales, dashboard, extras, repairs
+from .api.v1 import devices, sales, dashboard, extras, repairs, system
 
 app = FastAPI(title="SmartStock TN API")
 
@@ -23,10 +23,10 @@ async def json_errors(request, call_next):
 app.add_middleware(GZipMiddleware, minimum_size=800)
 app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
                    allow_methods=["*"], allow_headers=["*"])
-for r in (devices.router, sales.router, dashboard.router, extras.router, repairs.router):
+for r in (devices.router, sales.router, dashboard.router, extras.router, repairs.router, system.router):
     app.include_router(r, prefix="/api/v1")
 
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "version": "v10"}

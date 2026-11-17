@@ -11,7 +11,7 @@ Object.defineProperty(global, "navigator", { value: {}, configurable: true }); U
 const dev = { id: "1", model: "Galaxy", category: "parallele", imei1: "490154203237518", imei2: null, serial_number: "SN1", supplier_name: "S", color: "Black", ram: 8, rom: 128, purchase_price: 100, expected_sale_price: 150, sajalni_status: "autorise", status: "in_stock", created_at: "2026-01-01T00:00:00Z", purchase_date: "2026-01-01T00:00:00Z",
   sale: { sale_date: "2026-02-01T00:00:00Z", sale_price: 160, client_name: "Ali", seller_name: "me" } };
 const rep = { id: "r1", owner_name: "Sam", owner_phone: "22123456", model: "A1", status: "ready", received_at: "2026-01-01T00:00:00Z", delivered_at: null, price: 50 };
-const fx = p => p.startsWith("/repairs/counts") ? { all: 1, ready: 1 } : p.startsWith("/repairs") ? { items: [rep], total: 1 } : p.startsWith("/warranty") ? dev : p.startsWith("/dashboard") ? { in_stock: 1, blocked_in_stock: 1, sold: 1, tunisien: 0, parallele: 1, stock_value_tnd: 100, revenue_tnd: 160, gross_margin_tnd: 60 }
+const fx = p => p.startsWith("/system") ? { ok: true, missing: [] } : p.startsWith("/repairs/counts") ? { all: 1, ready: 1 } : p.startsWith("/repairs") ? { items: [rep], total: 1 } : p.startsWith("/warranty") ? dev : p.startsWith("/dashboard") ? { in_stock: 1, blocked_in_stock: 1, sold: 1, tunisien: 0, parallele: 1, stock_value_tnd: 100, revenue_tnd: 160, gross_margin_tnd: 60 }
   : p.startsWith("/alerts") ? { never: [dev], old: [dev], blocked: [dev], warranty: [{ kind: "phone" }], slow: [{ ...dev, days: 40 }] } : p.startsWith("/tasjil/last") ? { "1": { result_status: "autorise", checked_at: "2026-01-02T00:00:00Z", n: 2 } }
   : p.startsWith("/export") ? [{ model: "a", imei1: "1" }] : /history/.test(p) ? [{ at: "2026-01-01T00:00:00Z", text: "Added" }] : p.startsWith("/devices/lookup") ? dev : { items: [dev], total: 1 };
 (async () => {
@@ -30,6 +30,11 @@ const fx = p => p.startsWith("/repairs/counts") ? { all: 1, ready: 1 } : p.start
   const sb = (global.__sent || {}).b || {};
   if (!global.__sent || global.__sent.p !== "/devices/dev-1" || sb.ram !== 8 || sb.rom !== 256 || sb.purchase_price !== 400 || sb.model !== "Honor x7d" || sb.imei2 !== "869568089768630" || sb.supplier_name !== "Ahmed" || sb.sajalni_status !== null) errs.push("edit save body wrong: " + JSON.stringify(global.__sent));
   else out.push("edit-save:ok");
+  els.formerr = el(); const before = errs.length;
+  vm.runInThisContext(`api = async (p, o) => (o && o.method === "PATCH" ? { id: "dev-1", category: "parallele", imei1: "869568089768622", imei2: "869568089768630", serial_number: "ASUDJV6119H00102", model: "Honor x7d", color: "#000000", ram: null, rom: 256, purchase_price: 400, expected_sale_price: 450, notes: null, supplier_name: "Ahmed", sajalni_status: null } : { items: [], total: 0 });`);
+  await vm.runInThisContext(`saveForm({ preventDefault() {} }, "dev-1")`);
+  if (!String(els.formerr.innerHTML).includes("did not store: ram")) errs.push("silent non-save not detected: " + els.formerr.innerHTML); else out.push("verify:ok");
+  errs.length = before;
   console.log(out.join("  ")); console.log(errs.length ? "ERRORS: " + errs.join(" | ") : "SMOKE OK");
   process.exit(errs.length || out.some(x => x.includes("EMPTY")) ? 1 : 0);
 })().catch(e => { console.log("CRASH", e.stack.split("\n").slice(0, 4).join("\n")); process.exit(1); });

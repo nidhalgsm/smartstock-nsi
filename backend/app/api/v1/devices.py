@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from ...core import sb, current_user, audit, apply_search, paged, clean_date
 from ...schemas import DeviceIn
+from ...payload import drop_repair_columns
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 now = lambda: datetime.now(timezone.utc).isoformat()
@@ -36,6 +37,7 @@ def create_device(d: DeviceIn, user=Depends(current_user)):
     if d.is_repair:  # repaired phone nobody collected: it is SOLD, so it stays in stock; no supplier / Sajalni status
         data.pop("supplier_name", None)
         data.pop("sajalni_status", None)
+    data = drop_repair_columns(data, d.is_repair)
     row = sb.table("devices").insert(data).execute().data[0]
     audit(user, "device.create", "device", row["id"], d.model or "")
     return row
@@ -78,7 +80,7 @@ def read_device(device_id: str, user=Depends(current_user)):
 
 @router.patch("/{device_id}")
 def update_device(device_id: str, d: DeviceIn, user=Depends(current_user)):
-    _get(device_id)
+    cur = _get(device_id)
     dup = _find_duplicate(d, exclude_id=device_id)
     if dup:
         raise HTTPException(409, f"Another phone already uses {dup}")
@@ -86,6 +88,7 @@ def update_device(device_id: str, d: DeviceIn, user=Depends(current_user)):
     if d.is_repair:
         data["supplier_name"] = data["sajalni_status"] = None
     data["updated_at"] = now()
+    data = drop_repair_columns(data, d.is_repair, cur)
     rows = sb.table("devices").update(data).eq("id", device_id).execute().data
     if not rows:
         raise HTTPException(404, "Phone not found (nothing was updated)")

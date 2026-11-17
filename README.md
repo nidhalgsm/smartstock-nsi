@@ -50,3 +50,8 @@ To change an image: replace it in `design/` and run `python tools/build_assets.p
 * Enter only jumps to the next field inside IMEI / Serial fields (scanners); everywhere else Enter saves.
 * RAM / ROM selects now share the row evenly (RAM was squeezed to a few pixels).
 * Bump `?v=` in `index.html` whenever you change `app.js` / `styles.css` / `assets.js` (now `?v=8`).
+
+## v10
+* Normal phones never write the repair columns (`is_repair`, `owner_name`), so add/edit works even if migration 005 was not run. A red banner (from `/api/v1/system/check`) tells you which migrations are missing.
+* After an edit the app compares what the server stored with what you typed and shows the difference instead of a silent "Saved".
+* `https://YOUR-SERVICE.onrender.com/health` now shows `"version": "v10"`: open it to confirm the new backend is really live.
